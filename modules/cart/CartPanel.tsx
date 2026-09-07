@@ -86,10 +86,10 @@ export default function CartPanel({
                   ? 'Your basket qualifies for free shipping.'
                   : `You’re $${(threshold - subtotal).toFixed(2)} away from free shipping.`}
               </p>
-              <p>
-                Shipping eligibility is shown on each product. Payment checkout
-                is not yet available.
-              </p>
+              <p>Shipping eligibility is checked at checkout.</p>
+              <a className="primary-button" href="/checkout">
+                Continue to checkout
+              </a>
             </div>
           </>
         )}
