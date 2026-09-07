@@ -1,4 +1,5 @@
 import AdminDashboard from '@/admin/AdminDashboard';
+import BrandLogo from '@/components/BrandLogo';
 import { getChatGPTUser, chatGPTSignInPath } from '@/app/chatgpt-auth';
 import { isAdmin } from '@/services/adminAuth';
 export const dynamic = 'force-dynamic';
@@ -7,9 +8,7 @@ export default async function AdminPage() {
   if (!(await isAdmin()))
     return (
       <main className="admin-gate">
-        <a className="wordmark" href="/">
-          doko<span>NEPALI MARKET</span>
-        </a>
+        <BrandLogo />
         <h1>Store administration</h1>
         {user ? (
           <>

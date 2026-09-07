@@ -1,4 +1,5 @@
 'use client';
+import BrandLogo from '@/components/BrandLogo';
 import { useEffect, useState } from 'react';
 import {
   ShoppingBasket,
@@ -98,14 +99,7 @@ export default function Storefront() {
         <Truck size={16} />
       </div>
       <header className="site-header">
-        <a
-          className="wordmark"
-          href="/"
-          aria-label={`${settings.site_name} home`}
-        >
-          {settings.site_name.toLowerCase()}
-          <span>NEPALI MARKET</span>
-        </a>
+        <BrandLogo name={settings.site_name} />
         <nav aria-label="Main navigation">
           <a href="#shop">Shop the pantry</a>
           <a href="#specials">Seasonal specials</a>
@@ -238,10 +232,7 @@ export default function Storefront() {
       </main>
       <footer>
         <div className="footer-main">
-          <a href="/" className="wordmark">
-            {settings.site_name.toLowerCase()}
-            <span>NEPALI MARKET</span>
-          </a>
+          <BrandLogo name={settings.site_name} />
           <p>Good food brings us closer.</p>
           <div>
             <a href="#shop">Shop</a>
