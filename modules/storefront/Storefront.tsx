@@ -177,7 +177,7 @@ export default function Storefront() {
             <h2>
               From our community
               <br />
-              to your kitchen.
+              to your home.
             </h2>
             <div className="steps">
               {[
