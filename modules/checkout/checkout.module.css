@@ -70,6 +70,12 @@
   margin: 18px 0;
   color: #5b657b;
 }
+.salesFinal {
+  color: #101e47 !important;
+  font-weight: 700;
+  border-left: 3px solid #db1040;
+  padding-left: 12px;
+}
 .summary ul {
   padding: 0;
   margin: 0;

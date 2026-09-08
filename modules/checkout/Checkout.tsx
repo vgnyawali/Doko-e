@@ -194,6 +194,10 @@ export default function Checkout() {
                   No card details are collected. Shipping rates and taxes will
                   be confirmed when payment is connected.
                 </p>
+                <p className={styles.salesFinal}>
+                  All sales are final. Please review your basket and shipping
+                  details before continuing.
+                </p>
                 <button
                   type="button"
                   className="primary-button"
