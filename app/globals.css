@@ -961,6 +961,8 @@ footer {
 .admin-header > a {
   font-size: 14px;
 }
+.admin-header-actions { display: flex; align-items: center; gap: 18px; }
+.admin-header-actions button { border: 0; background: transparent; color: var(--red); font-size: 13px; text-decoration: underline; }
 .sample-note {
   background: #fff1d9;
   border: 1px solid #f1ddb6;
@@ -1181,6 +1183,11 @@ footer {
   background: var(--pale);
   padding: 10px;
 }
+.admin-login { width: min(100%, 420px); margin: 8px 0 12px; padding: 24px; border: 1px solid var(--border); background: #fff; }
+.admin-login h2 { font-size: 26px; margin-bottom: 8px; }
+.admin-login > p { color: #677086; font-size: 14px; margin: 0 0 16px; }
+.admin-login label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0; }
+.admin-login input { display: block; width: 100%; border: 1px solid var(--border); padding: 11px; margin-top: 6px; font: 16px Arial, sans-serif; }
 .admin-card table {
   font-size: 14px;
 }

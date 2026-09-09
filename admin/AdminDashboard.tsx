@@ -106,7 +106,17 @@ export default function AdminDashboard() {
           <p className="eyebrow">Doko · Store management</p>
           <h1>A little behind the scenes.</h1>
         </div>
-        <a href="/">View storefront ↗</a>
+        <div className="admin-header-actions">
+          <a href="/">View storefront ↗</a>
+          <button
+            onClick={async () => {
+              await fetch('/api/admin/logout', { method: 'POST' });
+              window.location.assign('/admin');
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </header>
       <p className="sample-note">
         The starter catalog contains sample prices, inventory and illustrative

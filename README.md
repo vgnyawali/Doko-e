@@ -31,3 +31,7 @@ Paste a public Google Sheets edit or published URL in Admin → Google Sheets im
 Prices, inventory, brands, package contents and seasonal dates are illustrative starter data. Ingredient labels and allergens deliberately avoid unverified safety claims. Replace them with supplier information, product-specific photography, and your support email before selling. Photos are illustrative Unsplash images observed on the reference site; they do not certify package contents. All imagery is replaceable via the product and special editors.
 
 Nationwide shipping is enabled; local-only and pickup-only are disabled by default. The basket supports quantities and subtotal, but this scope does not include payment processing, tax calculation, order creation, carrier rates or fulfillment. There is no live checkout.
+
+## Password admin login
+
+The `/admin` page supports a non-ChatGPT username and password when these Sites environment variables are configured: `ADMIN_LOGIN_USERNAME`, `ADMIN_LOGIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET` (a random secret of at least 32 characters). Generate the password hash with `node scripts/hash-admin-password.mjs "your-password"`, then save the output as the password hash secret. Password login creates an eight-hour, signed, HTTP-only session cookie; credentials are never stored in D1. Leave these variables unset to keep ChatGPT-only access.

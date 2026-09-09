@@ -2,6 +2,7 @@ import AdminDashboard from '@/admin/AdminDashboard';
 import BrandLogo from '@/components/BrandLogo';
 import { getChatGPTUser, chatGPTSignInPath } from '@/app/chatgpt-auth';
 import { isAdmin } from '@/services/adminAuth';
+import AdminLogin from '@/admin/AdminLogin';
 export const dynamic = 'force-dynamic';
 export default async function AdminPage() {
   const user = await getChatGPTUser();
@@ -31,6 +32,7 @@ export default async function AdminPage() {
             >
               Sign in with ChatGPT
             </a>
+            <AdminLogin />
           </>
         )}
         <a href="/">← Back to the store</a>

@@ -4,15 +4,15 @@ import { validateProduct, type Product } from '@/models/Product';
 import { previewCSV, sheetCSVUrl } from '@/services/sheets';
 import { validateSettings, validateSpecial } from '@/services/validation';
 export const dynamic = 'force-dynamic';
-export async function GET() {
-  if (!(await isAdmin()))
+export async function GET(request: Request) {
+  if (!(await isAdmin(request)))
     return Response.json({ error: 'Admin access required' }, { status: 403 });
   return Response.json(await readStore(), {
     headers: { 'Cache-Control': 'no-store' },
   });
 }
 export async function POST(request: Request) {
-  if (!(await isAdmin()))
+  if (!(await isAdmin(request)))
     return Response.json({ error: 'Admin access required' }, { status: 403 });
   if (request.headers.get('origin') !== new URL(request.url).origin)
     return Response.json({ error: 'Invalid origin' }, { status: 403 });
