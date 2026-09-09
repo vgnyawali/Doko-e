@@ -52,11 +52,15 @@ export function validateSpecial(s: FeaturedSpecial, products: Product[]) {
     e.push('Priority must be a non-negative integer');
   if (typeof s.active !== 'boolean') e.push('Active must be true or false');
   if (s.hero_image) {
-    try {
-      if (new URL(s.hero_image).protocol !== 'https:')
-        e.push('Hero image must use HTTPS');
-    } catch {
-      e.push('Invalid hero image URL');
+    if (s.hero_image.startsWith('data:image/')) {
+      if (s.hero_image.length > 1_100_000) e.push('Hero image is too large');
+    } else {
+      try {
+        if (new URL(s.hero_image).protocol !== 'https:')
+          e.push('Hero image must use HTTPS');
+      } catch {
+        e.push('Invalid hero image URL');
+      }
     }
   }
   return e;

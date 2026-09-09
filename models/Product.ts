@@ -86,11 +86,15 @@ export function validateProduct(p: Product): string[] {
     errors.push('shipping_type is invalid');
   for (const f of ['active', 'featured'] as const)
     if (typeof p[f] !== 'boolean') errors.push(`${f} must be true or false`);
-  try {
-    const u = new URL(p.image_url);
-    if (u.protocol !== 'https:') errors.push('image_url must use HTTPS');
-  } catch {
-    errors.push('image_url must be a valid HTTPS URL');
+  if (p.image_url.startsWith('data:image/')) {
+    if (p.image_url.length > 1_100_000) errors.push('image_url is too large');
+  } else {
+    try {
+      const u = new URL(p.image_url);
+      if (u.protocol !== 'https:') errors.push('image_url must use HTTPS');
+    } catch {
+      errors.push('image_url must be a valid HTTPS URL or uploaded image');
+    }
   }
   return errors;
 }

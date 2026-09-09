@@ -5,6 +5,7 @@ import type { FeaturedSpecial } from '@/models/FeaturedSpecial';
 import { isSpecialCurrent } from '@/models/FeaturedSpecial';
 import { Field, Choice, Toggle } from './Fields';
 import { validateSpecial } from '@/services/validation';
+import ImageUploadField from './ImageUploadField';
 export default function SpecialsEditor({
   specials,
   products,
@@ -98,12 +99,12 @@ export default function SpecialsEditor({
               }))}
               onChange={(v) => setDraft({ ...draft, product_id: v })}
             />
+            <ImageUploadField label="Hero image" value={draft.hero_image} onChange={(v) => setDraft({ ...draft, hero_image: v })} />
             {(
               [
                 'occasion',
                 'headline',
                 'description',
-                'hero_image',
                 'start_date',
                 'end_date',
                 'priority',

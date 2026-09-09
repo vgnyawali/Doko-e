@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { type Product, shippingTypes, validateProduct } from '@/models/Product';
 import { Field, Choice, Toggle } from './Fields';
+import ImageUploadField from './ImageUploadField';
 export default function ProductEditor({
   product,
   existing,
@@ -28,8 +29,9 @@ export default function ProductEditor({
       }}
     >
       <div className="form-grid">
+        <ImageUploadField label="Product image" value={draft.image_url} onChange={(v) => update('image_url', v)} />
         {Object.keys(draft)
-          .filter((k) => !['active', 'featured', 'shipping_type'].includes(k))
+          .filter((k) => !['active', 'featured', 'shipping_type', 'image_url'].includes(k))
           .map((key) => {
             const k = key as keyof Product;
             const numeric = ['price', 'inventory', 'display_order'].includes(k);
