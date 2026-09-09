@@ -77,7 +77,9 @@ async function sessionUsername(value: string | null) {
   }
 }
 async function passwordMatches(password: string) {
-  const stored = env.ADMIN_LOGIN_PASSWORD_HASH;
+  const stored = (env.ADMIN_LOGIN_PASSWORD_HASH || '')
+    .trim()
+    .replace(/^("|')|("|')$/g, '');
   if (!stored || password.length > 256) return false;
   const [scheme, iterationsText, saltText, digestText] = stored.split('$');
   const iterations = Number(iterationsText);
@@ -120,12 +122,12 @@ async function passwordMatches(password: string) {
   }
 }
 export async function authenticatePassword(username: string, password: string) {
-  const configuredUsername = env.ADMIN_LOGIN_USERNAME;
+  const configuredUsername = (env.ADMIN_LOGIN_USERNAME || '').trim();
   if (
     !configuredUsername ||
     username.length > 120 ||
     password.length > 256 ||
-    username !== configuredUsername ||
+    username.trim() !== configuredUsername ||
     !(await passwordMatches(password))
   )
     return null;
