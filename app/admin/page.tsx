@@ -38,5 +38,5 @@ export default async function AdminPage() {
         <a href="/">← Back to the store</a>
       </main>
     );
-  return <AdminDashboard />;
+  return <AdminDashboard chatGPTSession={Boolean(user)} />;
 }

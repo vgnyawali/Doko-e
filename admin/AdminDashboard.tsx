@@ -36,7 +36,11 @@ type Store = {
   specials: FeaturedSpecial[];
   settings: SiteSettings;
 };
-export default function AdminDashboard() {
+export default function AdminDashboard({
+  chatGPTSession = false,
+}: {
+  chatGPTSession?: boolean;
+}) {
   const [store, setStore] = useState<Store | null>(null);
   const [editor, setEditor] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
@@ -111,7 +115,11 @@ export default function AdminDashboard() {
           <button
             onClick={async () => {
               await fetch('/api/admin/logout', { method: 'POST' });
-              window.location.assign('/admin');
+              window.location.assign(
+                chatGPTSession
+                  ? '/signout-with-chatgpt?return_to=%2Fadmin'
+                  : '/admin',
+              );
             }}
           >
             Sign out
