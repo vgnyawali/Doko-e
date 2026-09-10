@@ -1,8 +1,14 @@
 import {
   authenticatePassword,
+  adminAuthDiagnostics,
+  AdminConfigurationError,
   sessionCookieHeader,
 } from '@/services/adminAuth';
 export const dynamic = 'force-dynamic';
+// Temporary diagnostics: deliberately only these four booleans, never values.
+export async function GET() {
+  return Response.json(adminAuthDiagnostics(), { headers: { 'Cache-Control': 'no-store' } });
+}
 export async function POST(request: Request) {
   if (request.headers.get('origin') !== new URL(request.url).origin)
     return Response.json({ error: 'Invalid request origin.' }, { status: 403 });
@@ -14,6 +20,7 @@ export async function POST(request: Request) {
     const body = JSON.parse(text) as { username?: unknown; password?: unknown };
     if (typeof body.username !== 'string' || typeof body.password !== 'string')
       throw Error();
+    console.info(adminAuthDiagnostics());
     const session = await authenticatePassword(body.username, body.password);
     if (!session)
       return Response.json(
@@ -27,7 +34,10 @@ export async function POST(request: Request) {
         'Set-Cookie': sessionCookieHeader(session),
       },
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof AdminConfigurationError)
+      return Response.json({ error: 'Admin login is not configured correctly. Contact the store owner.' },
+        { status: 503, headers: { 'Cache-Control': 'no-store' } });
     return Response.json({ error: 'Invalid login request.' }, { status: 400 });
   }
 }

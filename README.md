@@ -35,3 +35,13 @@ Nationwide shipping is enabled; local-only and pickup-only are disabled by defau
 ## Password admin login
 
 The `/admin` page supports a non-ChatGPT username and password when these Sites environment variables are configured: `ADMIN_LOGIN_USERNAME`, `ADMIN_LOGIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET` (a random secret of at least 32 characters). Generate the password hash with `node scripts/hash-admin-password.mjs "your-password"`, then save the output as the password hash secret. Password login creates an eight-hour, signed, HTTP-only session cookie; credentials are never stored in D1. Leave these variables unset to keep ChatGPT-only access.
+
+### Admin authentication diagnostics
+
+Production authentication reads `env.ADMIN_LOGIN_USERNAME`, `env.ADMIN_LOGIN_PASSWORD_HASH`, and `env.ADMIN_SESSION_SECRET` from `cloudflare:workers` during each request. Local `.env` files do not configure the published Site. Set these three exact keys as Sites secrets, then deploy the updated build to apply the saved environment revision.
+
+Configuration values have surrounding whitespace and a matching pair of outer single/double quotes removed; the entered password is never modified. The hash must be `pbkdf2$iterations$salt$digest`, with 100000–500000 iterations, a 16-byte salt and a 32-byte SHA-256 digest encoded as unpadded base64url. The generator uses 150000 iterations. The session secret must contain at least 32 characters after normalization.
+
+Temporary `GET /api/admin/login` diagnostics return only `usernameConfigured`, `passwordHashConfigured`, `sessionSecretConfigured`, and `hashStartsWithPbkdf2`, with caching disabled. Login attempts log the same four booleans, without credentials or exception details. These booleans indicate presence/prefix, not credential correctness or minimum secret length. Remove the GET handler and diagnostic log after deployment troubleshooting is complete.
+
+Run `node scripts/test-admin-auth.mjs` to test the server verifier in the Workers runtime with synthetic credentials. Missing or malformed configuration now returns HTTP 503 instead of an incorrect-password message.

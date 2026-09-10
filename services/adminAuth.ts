@@ -2,6 +2,27 @@ import { env } from 'cloudflare:workers';
 import { headers } from 'next/headers';
 import { getChatGPTUser } from '@/app/chatgpt-auth';
 
+import { normalizeCredential, parsePasswordHash, verifyPassword } from './adminCredentials';
+
+// Read bindings during requests; hosted values come from Sites, not local files.
+function credentials() {
+  return {
+    username: normalizeCredential(env.ADMIN_LOGIN_USERNAME),
+    passwordHash: normalizeCredential(env.ADMIN_LOGIN_PASSWORD_HASH),
+    sessionSecret: normalizeCredential(env.ADMIN_SESSION_SECRET),
+  };
+}
+export function adminAuthDiagnostics() {
+  const c = credentials();
+  return {
+    usernameConfigured: Boolean(c.username),
+    passwordHashConfigured: Boolean(c.passwordHash),
+    sessionSecretConfigured: Boolean(c.sessionSecret),
+    hashStartsWithPbkdf2: c.passwordHash.startsWith('pbkdf2$'),
+  };
+}
+export class AdminConfigurationError extends Error {}
+
 const SESSION_COOKIE = 'doko_admin_session';
 const SESSION_MAX_AGE = 8 * 60 * 60;
 const encoder = new TextEncoder();
@@ -22,7 +43,7 @@ function fromBase64url(value: string) {
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 async function signingKey() {
-  const secret = env.ADMIN_SESSION_SECRET;
+  const secret = credentials().sessionSecret;
   if (!secret || secret.length < 32) return null;
   return crypto.subtle.importKey(
     'raw',
@@ -76,62 +97,14 @@ async function sessionUsername(value: string | null) {
     return null;
   }
 }
-async function passwordMatches(password: string) {
-  const stored = (env.ADMIN_LOGIN_PASSWORD_HASH || '')
-    .trim()
-    .replace(/^("|')|("|')$/g, '');
-  if (!stored || password.length > 256) return false;
-  const [scheme, iterationsText, saltText, digestText] = stored.split('$');
-  const iterations = Number(iterationsText);
-  if (
-    scheme !== 'pbkdf2' ||
-    !Number.isInteger(iterations) ||
-    iterations < 100000 ||
-    iterations > 500000 ||
-    !saltText ||
-    !digestText
-  )
-    return false;
-  try {
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(password),
-      'PBKDF2',
-      false,
-      ['deriveBits'],
-    );
-    const bits = await crypto.subtle.deriveBits(
-      {
-        name: 'PBKDF2',
-        salt: fromBase64url(saltText),
-        iterations,
-        hash: 'SHA-256',
-      },
-      key,
-      256,
-    );
-    const actual = base64url(bits);
-    const expected = encoder.encode(digestText),
-      received = encoder.encode(actual);
-    return (
-      received.length === expected.length &&
-      received.every((byte, index) => byte === expected[index])
-    );
-  } catch {
-    return false;
-  }
-}
 export async function authenticatePassword(username: string, password: string) {
-  const configuredUsername = (env.ADMIN_LOGIN_USERNAME || '').trim();
-  if (
-    !configuredUsername ||
-    username.length > 120 ||
-    password.length > 256 ||
-    username.trim() !== configuredUsername ||
-    !(await passwordMatches(password))
-  )
-    return null;
-  return createSession(username);
+  const c = credentials();
+  const hash = parsePasswordHash(c.passwordHash);
+  if (!c.username || !hash || c.sessionSecret.length < 32)
+    throw new AdminConfigurationError('Admin login configuration is incomplete or invalid.');
+  if (username.length > 120 || password.length > 256 ||
+      username.trim() !== c.username || !verifyPassword(password, hash)) return null;
+  return createSession(c.username);
 }
 export function sessionCookieHeader(value: string) {
   return `${SESSION_COOKIE}=${value}; Path=/; Max-Age=${SESSION_MAX_AGE}; HttpOnly; Secure; SameSite=Lax`;
