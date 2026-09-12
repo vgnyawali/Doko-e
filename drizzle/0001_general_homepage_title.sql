@@ -1,0 +1,1 @@
+UPDATE site_settings SET data = json_set(data, '$.hero_title', 'A little bit of Nepal, wherever you are') WHERE id = 'main' AND json_extract(data, '$.hero_title') = 'A little taste of home, delivered.';

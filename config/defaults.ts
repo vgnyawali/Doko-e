@@ -1,7 +1,7 @@
 import type { SiteSettings } from '@/models/SiteSettings';
 export const defaultSettings: SiteSettings = {
   site_name: 'Doko',
-  hero_title: 'A little taste of home, delivered.',
+  hero_title: 'A little bit of Nepal, wherever you are',
   hero_subtitle:
     'The Nepali essentials you grew up with. Thoughtfully selected, carefully packed, and brought to your door — anywhere in the U.S.',
   shipping_message: 'Nepali favorites. Delivered across the U.S.',

@@ -118,9 +118,9 @@ export default function Storefront() {
             <h1>
               {settings.hero_title === defaultSettings.hero_title ? (
                 <>
-                  A little taste of
+                  A little bit of Nepal,
                   <br />
-                  <em>home,</em> delivered.
+                  wherever <em>you are</em>
                 </>
               ) : (
                 settings.hero_title
@@ -225,7 +225,7 @@ export default function Storefront() {
               kitchens across America.
             </p>
             <span className="nepali-note" lang="ne">
-              घरको स्वाद, जहाँ भए पनि।
+              घरको अनुभूति, जहाँ भए पनि।
             </span>
           </div>
         </section>
@@ -233,7 +233,7 @@ export default function Storefront() {
       <footer>
         <div className="footer-main">
           <BrandLogo name={settings.site_name} />
-          <p>Good food brings us closer.</p>
+          <p>Closer to culture. Closer to home.</p>
           <div>
             <a href="#shop">Shop</a>
             <a href="#how">How it works</a>
