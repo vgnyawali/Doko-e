@@ -80,8 +80,8 @@ export default function Checkout() {
       <p className="eyebrow">Your Doko basket</p>
       <h1>Checkout</h1>
       <p className={styles.notice}>
-        Payment preview · Online payments are not connected yet. No order will
-        be placed or charged.
+        Payment is completed on Stripe. The current payment link purchases one
+        Dashain Kit for $25. Your basket items and total are not transferred.
       </p>
       {!ready ? (
         <p role="status">Loading your basket…</p>
@@ -202,9 +202,9 @@ export default function Checkout() {
                   type="button"
                   className="primary-button"
                   disabled={busy}
-                  onClick={() => void submit(true)}
+                  onClick={() => window.location.assign('https://buy.stripe.com/7sYcMYc7J3CM4gVczF1oI00')}
                 >
-                  {busy ? 'Checking…' : 'Continue to payment preview'}
+                  {busy ? 'Checking…' : 'Continue to payment'}
                 </button>
               </>
             ) : (
