@@ -5,6 +5,7 @@ import type { SiteSettings } from '@/models/SiteSettings';
 import { defaultSettings } from '@/config/defaults';
 import { seedProducts } from '@/data/products';
 import { seedSpecials } from '@/data/specials';
+import { normalizeProduct } from './taxService';
 export function database() {
   return env.DB;
 }
@@ -48,7 +49,9 @@ export async function readStore() {
       .first<{ data: string }>(),
   ]);
   return {
-    products: p.results.map((x) => JSON.parse(x.data) as Product),
+    products: p.results.map((x) =>
+      normalizeProduct(JSON.parse(x.data) as Product),
+    ),
     specials: s.results.map((x) => JSON.parse(x.data) as FeaturedSpecial),
     settings: JSON.parse(c!.data) as SiteSettings,
   };
@@ -60,7 +63,7 @@ export async function saveProducts(products: Product[]) {
         .prepare(
           'INSERT INTO products (id,sku,data) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET sku=excluded.sku,data=excluded.data',
         )
-        .bind(p.id, p.sku, JSON.stringify(p)),
+        .bind(p.id, p.sku, JSON.stringify(normalizeProduct(p))),
     ),
   );
 }

@@ -1,5 +1,11 @@
 import type { Product } from '@/models/Product';
 import type { SiteSettings } from '@/models/SiteSettings';
+import {
+  normalizeProduct,
+  productTaxLines,
+  type TaxLine,
+} from '@/services/taxService';
+import type { BundleComponent } from '@/models/BundleComponent';
 
 export interface CheckoutRequest {
   items: { product_id: string; quantity: number }[];
@@ -20,8 +26,13 @@ export interface CheckoutQuote {
     quantity: number;
     unit_price: number;
     line_total: number;
+    product_type: Product['product_type'];
+    components: BundleComponent[];
+    tax_lines: TaxLine[];
   }[];
   subtotal: number;
+  taxable_subtotal: number;
+  tax_exempt_subtotal: number;
   shipping: number | null;
   tax: null;
   total: null;
@@ -89,22 +100,43 @@ export function quoteCheckout(
     if (item.quantity > p.inventory)
       throw Error(`Only ${p.inventory} ${p.name} remain. Update your basket.`);
     const cents = Math.round(p.price * 100);
-    if (!Number.isSafeInteger(cents) || cents < 1 || !Number.isSafeInteger(cents * item.quantity)) throw Error('A product price is unavailable. Please contact support.');
+    if (
+      !Number.isSafeInteger(cents) ||
+      cents < 1 ||
+      !Number.isSafeInteger(cents * item.quantity)
+    )
+      throw Error('A product price is unavailable. Please contact support.');
     return {
       product_id: p.id,
       name: p.name,
       quantity: item.quantity,
       unit_price: cents / 100,
       line_total: (cents * item.quantity) / 100,
+      product_type: normalizeProduct(p).product_type,
+      components: structuredClone(normalizeProduct(p).components),
+      tax_lines: productTaxLines(p, item.quantity),
     };
   });
   const subtotal =
     items.reduce((sum, item) => sum + Math.round(item.line_total * 100), 0) /
     100;
   // Unconfigured rates are unknown, not zero. No payable total is advertised.
+  const taxLines = items.flatMap((item) => item.tax_lines);
+  if (taxLines.length > 100)
+    throw Error(
+      'This basket exceeds Stripe’s 100 tax-portion limit. Please split it into smaller orders.',
+    );
   return {
     items,
     subtotal,
+    taxable_subtotal:
+      taxLines
+        .filter((l) => l.taxable)
+        .reduce((s, l) => s + l.unit_amount * l.quantity, 0) / 100,
+    tax_exempt_subtotal:
+      taxLines
+        .filter((l) => !l.taxable)
+        .reduce((s, l) => s + l.unit_amount * l.quantity, 0) / 100,
     shipping: subtotal >= settings.free_shipping_threshold ? 0 : null,
     tax: null,
     total: null,

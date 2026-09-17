@@ -1,4 +1,5 @@
 import { emptyProduct, validateProduct, type Product } from '@/models/Product';
+import { taxDefaults } from '@/config/tax';
 // RFC 4180 parser: commas, doubled quotes and embedded newlines are preserved.
 export function parseCSV(text: string): string[][] {
   const rows: string[][] = [];
@@ -62,6 +63,30 @@ export function previewCSV(text: string) {
     );
     const p = { ...emptyProduct, ...raw } as unknown as Product;
     const errors: string[] = [];
+    const warnings: string[] = [];
+    for (const key of [
+      'taxable',
+      'tax_class',
+      'stripe_tax_code',
+      'tax_behavior',
+    ] as const) {
+      if (raw[key] === undefined || raw[key] === '') {
+        (p as unknown as Record<string, unknown>)[key] = taxDefaults[key];
+        if (key !== 'stripe_tax_code')
+          warnings.push(`${key} missing: using ${String(taxDefaults[key])}`);
+      }
+    }
+    if (raw.taxable) {
+      if (!['true', 'false', '1', '0'].includes(raw.taxable.toLowerCase()))
+        errors.push('taxable must be true or false');
+      p.taxable = ['true', '1'].includes(raw.taxable.toLowerCase());
+    }
+    if (raw.product_type && raw.product_type !== 'normal')
+      errors.push(
+        'Import normal products only; edit bundle components in Admin',
+      );
+    p.product_type = 'normal';
+    p.components = [];
     for (const key of ['price', 'inventory', 'display_order'] as const) {
       p[key] = Number(raw[key] ?? (key === 'display_order' ? 0 : NaN));
       if (raw[key] === '') errors.push(`${key} is missing`);
@@ -81,6 +106,6 @@ export function previewCSV(text: string) {
     errors.push(...validateProduct(p));
     if (seen.has(p.id)) errors.push('Duplicate Product ID in sheet');
     seen.add(p.id);
-    return { row: index + 2, product: p, errors };
+    return { row: index + 2, product: p, errors, warnings };
   });
 }

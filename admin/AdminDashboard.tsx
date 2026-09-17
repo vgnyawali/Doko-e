@@ -31,6 +31,8 @@ import ProductEditor from './ProductEditor';
 import SheetsImport from './SheetsImport';
 import SpecialsEditor from './SpecialsEditor';
 import SiteSettingsEditor from './SiteSettingsEditor';
+import OrdersView from './OrdersView';
+import { taxClasses } from '@/config/tax';
 type Store = {
   products: Product[];
   specials: FeaturedSpecial[];
@@ -166,6 +168,7 @@ export default function AdminDashboard({
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="import">Google Sheets import</TabsTrigger>
           <TabsTrigger value="specials">Featured specials</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="settings">Site & shipping settings</TabsTrigger>
         </TabsList>
         <TabsContent value="products">
@@ -194,6 +197,7 @@ export default function AdminDashboard({
                     'Product',
                     'Price',
                     'Inventory',
+                    'Tax classification',
                     'Status',
                     'Featured',
                     'Actions',
@@ -218,6 +222,11 @@ export default function AdminDashboard({
                     </TableCell>
                     <TableCell>${p.price.toFixed(2)}</TableCell>
                     <TableCell>{p.inventory}</TableCell>
+                    <TableCell>
+                      {p.product_type === 'bundle'
+                        ? 'Bundle — component taxes'
+                        : `${p.taxable ? 'Taxable' : 'Exempt'} / ${taxClasses[p.tax_class]?.label || p.tax_class}`}
+                    </TableCell>
                     <TableCell>
                       <button
                         disabled={busy}
@@ -302,7 +311,9 @@ export default function AdminDashboard({
             specials={store.specials}
             products={store.products}
             busy={busy}
-            onSave={(special) => mutate({ action: 'special', special })}
+            onSave={(special, product) =>
+              mutate({ action: 'special', special, product })
+            }
             onDelete={(id) => setDeletion({ action: 'deleteSpecial', id })}
           />
         </TabsContent>
@@ -312,6 +323,9 @@ export default function AdminDashboard({
             busy={busy}
             onSave={(settings) => mutate({ action: 'settings', settings })}
           />
+        </TabsContent>
+        <TabsContent value="orders">
+          <OrdersView />
         </TabsContent>
       </Tabs>
       <Sheet

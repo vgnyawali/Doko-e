@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { type Product, shippingTypes, validateProduct } from '@/models/Product';
 import { Field, Choice, Toggle } from './Fields';
 import ImageUploadField from './ImageUploadField';
+import TaxFields from './TaxFields';
+import BundleEditor from './BundleEditor';
+import { normalizeProduct } from '@/services/taxService';
 export default function ProductEditor({
   product,
   existing,
@@ -14,7 +17,7 @@ export default function ProductEditor({
   onSave: (p: Product) => void;
   busy: boolean;
 }) {
-  const [draft, setDraft] = useState(product);
+  const [draft, setDraft] = useState(normalizeProduct(product));
   const [errors, setErrors] = useState<string[]>([]);
   function update(key: keyof Product, value: unknown) {
     setDraft({ ...draft, [key]: value });
@@ -29,9 +32,27 @@ export default function ProductEditor({
       }}
     >
       <div className="form-grid">
-        <ImageUploadField label="Product image" value={draft.image_url} onChange={(v) => update('image_url', v)} />
+        <ImageUploadField
+          label="Product image"
+          value={draft.image_url}
+          onChange={(v) => update('image_url', v)}
+        />
         {Object.keys(draft)
-          .filter((k) => !['active', 'featured', 'shipping_type', 'image_url'].includes(k))
+          .filter(
+            (k) =>
+              ![
+                'active',
+                'featured',
+                'shipping_type',
+                'image_url',
+                'taxable',
+                'tax_class',
+                'stripe_tax_code',
+                'tax_behavior',
+                'components',
+                'product_type',
+              ].includes(k),
+          )
           .map((key) => {
             const k = key as keyof Product;
             const numeric = ['price', 'inventory', 'display_order'].includes(k);
@@ -67,6 +88,29 @@ export default function ProductEditor({
           onChange={(v) => update('shipping_type', v)}
         />
       </div>
+      <Choice
+        label="Product type"
+        value={draft.product_type}
+        options={[
+          { value: 'normal', label: 'Normal product' },
+          { value: 'bundle', label: 'Bundle' },
+        ]}
+        onChange={(v) =>
+          setDraft({
+            ...draft,
+            product_type: v as Product['product_type'],
+            components: v === 'normal' ? [] : draft.components,
+          })
+        }
+      />
+      {draft.product_type === 'bundle' ? (
+        <BundleEditor product={draft} onChange={setDraft} />
+      ) : (
+        <TaxFields
+          value={draft}
+          onChange={(tax) => setDraft({ ...draft, ...tax })}
+        />
+      )}
       <div className="toggle-row">
         <Toggle
           label="Active"

@@ -22,7 +22,7 @@ export default function SheetsImport({
 }) {
   const [url, setUrl] = useState('');
   const [rows, setRows] = useState<
-    { row: number; product: Product; errors: string[] }[]
+    { row: number; product: Product; errors: string[]; warnings?: string[] }[]
   >([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -46,6 +46,7 @@ export default function SheetsImport({
       onImported(
         await request({
           action: 'products',
+          fromSheet: true,
           products: rows.map((r) => r.product),
         }),
       );
@@ -133,6 +134,7 @@ export default function SheetsImport({
                   </TableCell>
                   <TableCell className={r.errors.length ? 'error' : ''}>
                     {r.errors.join('; ') || 'Ready'}
+                    {r.warnings?.length ? <p>{r.warnings.join('; ')}</p> : null}
                   </TableCell>
                 </TableRow>
               ))}

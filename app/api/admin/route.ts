@@ -3,6 +3,7 @@ import { database, readStore, saveProducts } from '@/services/repository';
 import { validateProduct, type Product } from '@/models/Product';
 import { previewCSV, sheetCSVUrl } from '@/services/sheets';
 import { validateSettings, validateSpecial } from '@/services/validation';
+import { normalizeProduct, validateProductTax } from '@/services/taxService';
 export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   if (!(await isAdmin(request)))
@@ -34,9 +35,26 @@ export async function POST(request: Request) {
       return Response.json({ rows: previewCSV(text) });
     }
     if (action === 'products') {
-      const products: Product[] = data.products;
-      if (!Array.isArray(products) || !products.length || products.length > 500)
+      if (
+        !Array.isArray(data.products) ||
+        !data.products.length ||
+        data.products.length > 500
+      )
         throw Error('Import between 1 and 500 products.');
+      const products: Product[] = data.products.map((p: Product) => {
+        if (!p || typeof p !== 'object') throw Error('Invalid product');
+        // Sheet imports cannot overwrite existing component-based bundle records.
+        if (
+          data.fromSheet &&
+          store.products.some(
+            (old) => old.id === p.id && old.product_type === 'bundle',
+          )
+        )
+          throw Error(
+            'Edit existing bundles in Admin, not through a normal-product sheet',
+          );
+        return normalizeProduct(p);
+      });
       const ids = new Set<string>();
       for (const p of products) {
         if (!p || typeof p !== 'object') throw Error('Invalid product');
@@ -60,14 +78,39 @@ export async function POST(request: Request) {
       ]);
     } else if (action === 'special') {
       const s = data.special;
-      const errors = validateSpecial(s, store.products);
+      const source =
+        data.product || store.products.find((p) => p.id === s.product_id);
+      if (!source || source.id !== s.product_id)
+        throw Error('Choose the matching catalog product');
+      const product = {
+        ...normalizeProduct(source),
+        product_type: 'bundle' as const,
+        featured: true,
+      };
+      const errors = [
+        ...validateProduct(product),
+        ...validateProductTax(product, product.active || s.active),
+        ...validateSpecial(s, [
+          ...store.products.filter((p) => p.id !== product.id),
+          product,
+        ]),
+      ];
+      if (s.active && !product.active)
+        errors.push('Activate the bundle before activating the special');
       if (errors.length) throw Error(errors.join(', '));
-      await database()
-        .prepare(
-          'INSERT INTO specials(id,product_id,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET product_id=excluded.product_id,data=excluded.data',
-        )
-        .bind(s.id, s.product_id, JSON.stringify(s))
-        .run();
+      // One transaction updates the canonical product and its special reference.
+      await database().batch([
+        database()
+          .prepare(
+            'INSERT INTO products(id,sku,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET sku=excluded.sku,data=excluded.data',
+          )
+          .bind(product.id, product.sku, JSON.stringify(product)),
+        database()
+          .prepare(
+            'INSERT INTO specials(id,product_id,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET product_id=excluded.product_id,data=excluded.data',
+          )
+          .bind(s.id, s.product_id, JSON.stringify(s)),
+      ]);
     } else if (action === 'deleteSpecial') {
       await database()
         .prepare('DELETE FROM specials WHERE id = ?')

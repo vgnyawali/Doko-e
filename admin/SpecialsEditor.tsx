@@ -1,10 +1,13 @@
 'use client';
 import { useState } from 'react';
-import type { Product } from '@/models/Product';
+import { emptyProduct, type Product } from '@/models/Product';
 import type { FeaturedSpecial } from '@/models/FeaturedSpecial';
 import { isSpecialCurrent } from '@/models/FeaturedSpecial';
-import { Field, Choice, Toggle } from './Fields';
 import { validateSpecial } from '@/services/validation';
+import { validateProduct } from '@/models/Product';
+import { normalizeProduct } from '@/services/taxService';
+import { Field, Choice, Toggle } from './Fields';
+import ProductEditor from './ProductEditor';
 import ImageUploadField from './ImageUploadField';
 export default function SpecialsEditor({
   specials,
@@ -15,21 +18,47 @@ export default function SpecialsEditor({
 }: {
   specials: FeaturedSpecial[];
   products: Product[];
-  onSave: (s: FeaturedSpecial) => void;
+  onSave: (s: FeaturedSpecial, p?: Product) => void;
   onDelete: (id: string) => void;
   busy: boolean;
 }) {
   const [draft, setDraft] = useState<FeaturedSpecial | null>(null);
+  const [bundle, setBundle] = useState<Product | null>(null);
   const [error, setError] = useState('');
+  function selectProduct(id: string) {
+    const p = products.find((p) => p.id === id);
+    setBundle(p ? normalizeProduct(p) : null);
+  }
+  function begin(s: FeaturedSpecial) {
+    setDraft(s);
+    selectProduct(s.product_id);
+    setError('');
+  }
+  function save(p: Product) {
+    if (!draft) return;
+    const product = { ...p, product_type: 'bundle' as const, featured: true };
+    const errors = [
+      ...validateProduct(product),
+      ...validateSpecial(draft, [
+        ...products.filter((old) => old.id !== product.id),
+        product,
+      ]),
+    ];
+    if (draft.active && !product.active)
+      errors.push(
+        'Activate the referenced bundle before activating its special',
+      );
+    setError(errors.join(' · '));
+    if (!errors.length) onSave(draft, product);
+  }
   return (
     <section className="admin-card">
       <div className="admin-toolbar">
         <h2>Seasonal specials</h2>
         <button
           className="primary-button"
-          onClick={() => {
-            setError('');
-            setDraft({
+          onClick={() =>
+            begin({
               id: crypto.randomUUID(),
               product_id: products[0]?.id || '',
               occasion: '',
@@ -40,15 +69,15 @@ export default function SpecialsEditor({
               end_date: '',
               priority: 0,
               active: false,
-            });
-          }}
+            })
+          }
         >
           Add special
         </button>
       </div>
       <p>
-        Specials reference your catalog and automatically hide after their end
-        date (inclusive, UTC).
+        Specials reference one catalog product. Saving updates that same product
+        as a featured bundle. Dates are inclusive, UTC.
       </p>
       {specials.map((s) => (
         <div className="special-admin-row" key={s.id}>
@@ -62,44 +91,52 @@ export default function SpecialsEditor({
                 ? 'Live'
                 : s.active
                   ? 'Scheduled / ended'
-                  : 'Inactive'}{' '}
-              · Priority {s.priority}
+                  : 'Inactive'}
             </p>
           </div>
-          <button
-            onClick={() => {
-              setDraft(s);
-              setError('');
-            }}
-          >
-            Edit
-          </button>
+          <button onClick={() => begin(s)}>Edit</button>
           <button disabled={busy} onClick={() => onDelete(s.id)}>
             Delete
           </button>
         </div>
       ))}
       {draft && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const errors = validateSpecial(draft, products);
-            setError(errors.join(' · '));
-            if (!errors.length) onSave(draft);
-          }}
-        >
+        <section>
           <h3>Edit special</h3>
           <div className="form-grid">
             <Choice
-              label="Referenced product"
+              label="Referenced catalog product"
               value={draft.product_id}
               options={products.map((p) => ({
                 value: p.id,
                 label: `${p.name} (${p.id})`,
               }))}
-              onChange={(v) => setDraft({ ...draft, product_id: v })}
+              onChange={(id) => {
+                setDraft({ ...draft, product_id: id });
+                selectProduct(id);
+              }}
             />
-            <ImageUploadField label="Hero image" value={draft.hero_image} onChange={(v) => setDraft({ ...draft, hero_image: v })} />
+            <button
+              type="button"
+              onClick={() => {
+                const id = crypto.randomUUID();
+                setDraft({ ...draft, product_id: id });
+                setBundle({
+                  ...emptyProduct,
+                  id,
+                  sku: `BUNDLE-${id.slice(0, 8)}`,
+                  product_type: 'bundle',
+                  featured: true,
+                });
+              }}
+            >
+              Create new bundle product
+            </button>
+            <ImageUploadField
+              label="Hero image"
+              value={draft.hero_image}
+              onChange={(v) => setDraft({ ...draft, hero_image: v })}
+            />
             {(
               [
                 'occasion',
@@ -130,7 +167,7 @@ export default function SpecialsEditor({
             ))}
           </div>
           <Toggle
-            label="Active"
+            label="Special active"
             checked={draft.active}
             onChange={(v) => setDraft({ ...draft, active: v })}
           />
@@ -139,10 +176,23 @@ export default function SpecialsEditor({
               {error}
             </p>
           )}
-          <button type="submit" className="primary-button" disabled={busy}>
-            Save special
-          </button>
-        </form>
+          {bundle && (
+            <>
+              <p>
+                Edit the referenced product and its component allocations below.
+                Save product saves both the special and its catalog product
+                together.
+              </p>
+              <ProductEditor
+                key={draft.id + bundle.id}
+                product={{ ...bundle, product_type: 'bundle', featured: true }}
+                existing={products.some((p) => p.id === bundle.id)}
+                busy={busy}
+                onSave={save}
+              />
+            </>
+          )}
+        </section>
       )}
     </section>
   );

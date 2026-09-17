@@ -1,3 +1,6 @@
+import type { TaxConfiguration, BundleComponent } from './BundleComponent';
+import { taxDefaults } from '@/config/tax';
+import { validateProductTax } from '@/services/taxService';
 export const shippingTypes = [
   'nationwide',
   'local_only',
@@ -5,7 +8,9 @@ export const shippingTypes = [
   'unavailable',
 ] as const;
 export type ShippingType = (typeof shippingTypes)[number];
-export interface Product {
+export interface Product extends TaxConfiguration {
+  product_type: 'normal' | 'bundle';
+  components: BundleComponent[];
   id: string;
   name: string;
   nepali_name: string;
@@ -27,6 +32,9 @@ export interface Product {
   shipping_type: ShippingType;
 }
 export const emptyProduct: Product = {
+  ...taxDefaults,
+  product_type: 'normal',
+  components: [],
   id: '',
   name: '',
   nepali_name: '',
@@ -96,5 +104,5 @@ export function validateProduct(p: Product): string[] {
       errors.push('image_url must be a valid HTTPS URL or uploaded image');
     }
   }
-  return errors;
+  return [...errors, ...validateProductTax(p)];
 }
