@@ -26,7 +26,19 @@ export function sessionParameters(q: CheckoutQuote, customer: CheckoutRequest['c
 }
 export async function createPaymentSession(body: URLSearchParams,key: string,orderId: string,send=fetch){
   const response=await send('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{Authorization:`Bearer ${key.trim()}`,'Content-Type':'application/x-www-form-urlencoded','Idempotency-Key':orderId,'Stripe-Version':'2025-02-24.acacia'},body,signal:AbortSignal.timeout(20000)});
-  if(!response.ok)throw Error('Unable to start secure payment. Please try again or contact support.');
+  if(!response.ok){
+    const result = await response.json().catch(() => ({})) as {error?:{message?:string;code?:string;param?:string}};
+    const message = result.error?.message || '';
+    // Log only fixed categories; never keys, raw provider messages or customer data.
+    const category = response.status === 401 ? 'api_key_rejected'
+      : /tax|head office|business address/i.test(message) ? 'stripe_tax_setup_required'
+      : /shipping.rate|shipping_rate/i.test(message + ' ' + result.error?.param) ? 'shipping_rate_invalid'
+      : /test mode|live mode/i.test(message) ? 'stripe_mode_mismatch'
+      : result.error?.code === 'parameter_unknown' ? 'unsupported_parameter'
+      : 'stripe_request_rejected';
+    console.error('Stripe checkout diagnostic', {status:response.status,category});
+    throw Error('Unable to start secure payment. Please try again or contact support.');
+  }
   const session=await response.json() as {id:string;url:string};
   if(!session.id||!session.url||new URL(session.url).origin!=='https://checkout.stripe.com')throw Error('Invalid payment response. Please contact support.');
   return session;
