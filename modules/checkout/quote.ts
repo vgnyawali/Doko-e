@@ -89,6 +89,7 @@ export function quoteCheckout(
     if (item.quantity > p.inventory)
       throw Error(`Only ${p.inventory} ${p.name} remain. Update your basket.`);
     const cents = Math.round(p.price * 100);
+    if (!Number.isSafeInteger(cents) || cents < 1 || !Number.isSafeInteger(cents * item.quantity)) throw Error('A product price is unavailable. Please contact support.');
     return {
       product_id: p.id,
       name: p.name,

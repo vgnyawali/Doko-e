@@ -20,7 +20,12 @@ export default function Checkout() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [attempt, setAttempt] = useState('');
   useEffect(() => {
+    setAttempt(crypto.randomUUID());
+    const payment = new URLSearchParams(window.location.search).get('payment');
+    if (payment === 'returned') setMessage('Thank you. Payment confirmation is being processed. Please check your Stripe receipt. Your basket is preserved until you update it.');
+    if (payment === 'cancelled') setMessage('Payment was cancelled. Your basket is saved.');
     try {
       const cart = JSON.parse(localStorage.getItem('doko-basket') || '{}');
       if (cart && typeof cart === 'object' && !Array.isArray(cart))
@@ -47,7 +52,7 @@ export default function Checkout() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items, customer }),
+          body: JSON.stringify({ items, customer, attempt }),
         },
       );
       const data = (await response.json()) as {
@@ -55,6 +60,7 @@ export default function Checkout() {
         error?: string;
         status?: string;
         message?: string;
+        checkout_url?: string;
       };
       if (data.status === 'not_configured') {
         if (data.quote) setQuote(data.quote);
@@ -64,6 +70,7 @@ export default function Checkout() {
       if (!response.ok || !data.quote)
         throw Error(data.error || 'Checkout is temporarily unavailable.');
       setQuote(data.quote);
+      if (payment && data.checkout_url) window.location.assign(data.checkout_url);
     } catch (e) {
       setQuote(null);
       setError(e instanceof Error ? e.message : 'Please try again.');
@@ -80,8 +87,7 @@ export default function Checkout() {
       <p className="eyebrow">Your Doko basket</p>
       <h1>Checkout</h1>
       <p className={styles.notice}>
-        Payment is completed on Stripe. The current payment link purchases one
-        Dashain Kit for $25. Your basket items and total are not transferred.
+        Review your basket, then complete secure payment on Stripe.
       </p>
       {!ready ? (
         <p role="status">Loading your basket…</p>
@@ -179,20 +185,20 @@ export default function Checkout() {
                   </div>
                   <div>
                     <dt>Shipping</dt>
-                    <dd>{quote.shipping === 0 ? 'Free' : 'Not configured'}</dd>
+                    <dd>{quote.shipping === 0 ? 'Free' : 'Calculated on Stripe'}</dd>
                   </div>
                   <div>
                     <dt>Tax</dt>
-                    <dd>Not configured</dd>
+                    <dd>Calculated on Stripe</dd>
                   </div>
                   <div>
                     <dt>Total</dt>
-                    <dd>Pending payment setup</dd>
+                    <dd>Confirmed on Stripe before payment</dd>
                   </div>
                 </dl>
                 <p>
-                  No card details are collected. Shipping rates and taxes will
-                  be confirmed when payment is connected.
+                  Stripe will confirm your delivery address, shipping, taxes,
+                  and final total before you pay.
                 </p>
                 <p className={styles.salesFinal}>
                   All sales are final. Please review your basket and shipping
@@ -202,7 +208,7 @@ export default function Checkout() {
                   type="button"
                   className="primary-button"
                   disabled={busy}
-                  onClick={() => window.location.assign('https://buy.stripe.com/7sYcMYc7J3CM4gVczF1oI00')}
+                  onClick={() => void submit(true)}
                 >
                   {busy ? 'Checking…' : 'Continue to payment'}
                 </button>

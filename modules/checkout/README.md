@@ -1,10 +1,19 @@
-# Checkout and placeholder payment API
+# Basket checkout
 
-`/checkout` reads the existing device-local basket. Contact/address fields stay in page memory; the APIs validate them but do not persist or log them. No card fields, orders, stock reservations or charges are created.
+The checkout button POSTs product IDs, quantities and contact details to `/api/checkout/payment`. The server rechecks current catalog prices, inventory and nationwide shipping eligibility before creating a Stripe hosted Checkout Session. The old fixed Payment Link is not used.
 
-- `POST /api/checkout`: JSON `{items: [{product_id, quantity}], customer: {name, email, address, city, state, zip, country: "US"}}`. Returns `{quote}` using current database prices, availability and inventory. Invalid requests return 400; wrong origin returns 403.
-- `POST /api/checkout/payment`: same body; revalidates the quote and returns HTTP 503 with `{status: "not_configured", provider: "placeholder", checkout_url: null, payment_processed: false, order_created: false, message, quote}`. The basket remains intact. This is intentionally not a successful payment response.
+## Production setup (Sites environment variables)
 
-Replace `payment.ts` with a server-only provider adapter when ready. Placeholder secret names are `PAYMENT_SECRET_KEY` and `PAYMENT_WEBHOOK_SECRET`; no actual credentials or provider URLs are supplied. Merely adding secrets does not enable payment. The real integration must calculate shipping/tax, create an idempotent order/session, reserve inventory appropriately and verify signed webhooks before marking an order paid. Never accept client prices or expose secret keys to the browser.
+- `STRIPE_SECRET_KEY`: Stripe secret API key, stored as a Secret.
+- `STRIPE_WEBHOOK_SECRET`: signing secret for the webhook endpoint, stored as a Secret.
+- `STRIPE_SHIPPING_RATE_ID`: a Stripe fixed shipping rate ID (`shr_...`) for baskets below the Site Settings free-shipping threshold. Use a USD rate from the same Stripe account and test/live mode as the API key. Above the threshold the server supplies a free shipping rate.
 
-Below the free-shipping threshold, shipping remains unknown; tax and final total also remain unknown until configured. This shipping checkout accepts nationwide items only; pickup/local-only items must be handled by a separate fulfillment flow.
+Configure Stripe Tax (business address and applicable registrations) because Checkout uses automatic tax. Keys and shipping rates must all use the same test/live mode. No publishable key is required for this server-created hosted Checkout flow.
+
+Create a Stripe webhook destination at `https://doko-e.com/api/checkout/webhook` listening for `checkout.session.completed` and `checkout.session.async_payment_succeeded`. Use endpoint API version `2025-02-24.acacia`. Copy its signing secret into Sites and redeploy to apply the variables. Local `.env` files do not configure production.
+
+## Order records and limits
+
+D1 `checkout_orders` stores a pending snapshot and the Stripe session ID. Only a signed, recent webhook with `payment_status=paid` sets the record to paid. Repeated events are idempotent. Delivery details confirmed by Stripe are stored in `payment_data`; use those for fulfillment. A success redirect does not confirm payment and deliberately leaves the basket intact.
+
+Inventory is checked when opening Checkout, but this module does not reserve or decrement stock, send order emails, or fulfill shipments. Review paid orders and inventory before fulfillment. Stripe receipts can be enabled in Stripe settings. Test with Stripe sandbox keys before accepting real payments.

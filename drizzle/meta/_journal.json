@@ -15,6 +15,13 @@
       "when": 1789231495297,
       "tag": "0001_general_homepage_title",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789530000000,
+      "tag": "0002_checkout_orders",
+      "breakpoints": true
     }
   ]
 }
