@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import type { CheckoutOrder } from '@/models/CheckoutOrder';
+import { customerDetails, customersCsv, loadOrdersForExport } from '@/modules/orders/customer';
 const dollars = (value: number | undefined) =>
   value === undefined ? 'Not recorded' : `$${value.toFixed(2)}`;
 export default function OrdersView() {
@@ -8,6 +9,29 @@ export default function OrdersView() {
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   const [cursor, setCursor] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState('');
+  async function exportCustomers() {
+    setExporting(true);
+    setError('');
+    setExportMessage('');
+    try {
+      const allOrders = await loadOrdersForExport();
+      const url = URL.createObjectURL(new Blob([customersCsv(allOrders)], { type: 'text/csv;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `doko-customers-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setExportMessage(`Exported ${allOrders.length} orders. Each CSV row represents one order.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to export orders.');
+    } finally {
+      setExporting(false);
+    }
+  }
   async function load(more = false) {
     setBusy(true);
     setError('');
@@ -39,12 +63,17 @@ export default function OrdersView() {
         <button disabled={busy} onClick={() => void load()}>
           Refresh
         </button>
+        <button disabled={exporting} onClick={() => void exportCustomers()}>
+          {exporting ? 'Exporting…' : 'Export customers to CSV'}
+        </button>
       </div>
+      {exportMessage && <p role="status">{exportMessage}</p>}
       {error && <p role="alert">{error}</p>}
       {!orders.length && !busy && <p>No orders yet.</p>}
       {orders.map((o) => {
         const q = o.data.quote,
           p = o.payment_data;
+        const customer = customerDetails(o);
         return (
           <article key={o.id}>
             <h3>Order {o.id.slice(0, 12)}</h3>
@@ -58,6 +87,19 @@ export default function OrdersView() {
               Status: {o.status} · Stripe session:{' '}
               {o.session_id || 'Not created'}
             </p>
+            <section aria-label="Customer details" style={{ overflowWrap: 'anywhere' }}>
+              <h4>Customer details</h4>
+              <dl>
+                <dt>Name</dt><dd>{customer.name || 'Not recorded'}</dd>
+                <dt>Email</dt><dd>{customer.email || 'Not recorded'}</dd>
+                <dt>{q.fulfillment_method === 'delivery' ? 'Delivery address' : 'Shipping address'}</dt>
+                <dd>{[
+                  customer.line1, customer.line2,
+                  [customer.city, customer.state, customer.postalCode].filter(Boolean).join(', '),
+                  customer.country,
+                ].filter(Boolean).map((line, index) => <div key={index}>{line}</div>)}</dd>
+              </dl>
+            </section>
             <dl>
               <dt>Confirmation email</dt>
               <dd>{o.data.confirmation_email_sent_at
