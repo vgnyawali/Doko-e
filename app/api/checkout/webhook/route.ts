@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { validStripeSignature } from '@/modules/checkout/webhook';
 import { checkoutEventUpdate } from '@/modules/checkout/paymentEvents';
+import { sendOrderConfirmation } from '@/modules/email/confirmation';
 export async function POST(request: Request) {
   if (!env.STRIPE_WEBHOOK_SECRET)
     return new Response('Unavailable', { status: 503 });
@@ -35,6 +36,11 @@ export async function POST(request: Request) {
           update.session_id,
         )
         .run();
+      // Await provider acceptance before acknowledging: Stripe retries errors.
+      // A failed email never rolls back a verified paid order.
+      if (update.status === 'paid') {
+        await sendOrderConfirmation(env.DB, update.order_id, update.session_id, env);
+      }
     }
     return Response.json({ received: true });
   } catch {

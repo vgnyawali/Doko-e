@@ -3,7 +3,12 @@ export interface CheckoutOrder {
   id: string;
   session_id: string | null;
   status: string;
-  data: { quote: CheckoutQuote };
+  data: {
+    quote: CheckoutQuote;
+    confirmation_email_sent_at?: string;
+    confirmation_email_test_sent_at?: string;
+    confirmation_email_first_attempt_at?: number;
+  };
   payment_data: null | {
     amount_subtotal?: number;
     amount_tax?: number;

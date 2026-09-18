@@ -59,6 +59,14 @@ export default function OrdersView() {
               {o.session_id || 'Not created'}
             </p>
             <dl>
+              <dt>Confirmation email</dt>
+              <dd>{o.data.confirmation_email_sent_at
+                ? 'Sent (accepted by email provider)'
+                : o.data.confirmation_email_test_sent_at
+                  ? 'Sandbox test accepted — not sent to customer'
+                  : o.data.confirmation_email_first_attempt_at
+                    ? 'Not confirmed — check email provider and Stripe webhook logs'
+                    : 'Not sent'}</dd>
               <dt>Product subtotal (advertised)</dt>
               <dd>{dollars(q.subtotal)}</dd>
               <dt>Taxable Portion</dt>

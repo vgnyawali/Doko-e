@@ -39,7 +39,7 @@ Order number, order date, payment/order status, email, delivery address, image/n
 
 ## Email limitation
 
-No order email service is configured. The requested 'A confirmation email has been sent…' copy and spam-folder guidance render only when the server order data contains `confirmation_email_sent_at`. Set this field only after a real sender confirms success. Until an email integration is configured, the paid page truthfully says it cannot confirm an email was sent and offers support at `order@doko-e.com`. A Stripe payment webhook does not prove email delivery. This change does not send messages or configure outbound email.
+The Resend integration is documented in `modules/email/README.md`. The 'A confirmation email has been sent…' copy renders only after the provider accepts the message and the server stores `confirmation_email_sent_at`. Sending is disabled until the Site email settings are configured. Sandbox emails go to a test sink and do not set the customer sent marker. Provider acceptance is not proof of inbox delivery.
 
 ## Testing
 
