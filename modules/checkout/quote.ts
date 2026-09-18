@@ -24,6 +24,8 @@ export interface CheckoutQuote {
     product_id: string;
     name: string;
     quantity: number;
+    image_url?: string;
+    special_occasion?: string;
     unit_price: number;
     line_total: number;
     product_type: Product['product_type'];
@@ -109,6 +111,8 @@ export function quoteCheckout(
     return {
       product_id: p.id,
       name: p.name,
+      image_url: p.image_url,
+      special_occasion: p.special_occasion,
       quantity: item.quantity,
       unit_price: cents / 100,
       line_total: (cents * item.quantity) / 100,

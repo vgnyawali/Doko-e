@@ -26,7 +26,7 @@ export function sessionParameters(
     'metadata[doko_order_id]': orderId,
     'automatic_tax[enabled]': 'true',
     'shipping_address_collection[allowed_countries][0]': 'US',
-    success_url: `${origin}/checkout?payment=returned`,
+    success_url: `${origin}/checkout/confirmation?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/checkout?payment=cancelled`,
     'custom_text[submit][message]':
       'All sales are final. Please review your order before paying.',

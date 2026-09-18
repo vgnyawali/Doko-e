@@ -24,8 +24,12 @@ export default function Checkout() {
   useEffect(() => {
     setAttempt(crypto.randomUUID());
     const payment = new URLSearchParams(window.location.search).get('payment');
-    if (payment === 'returned') setMessage('Thank you. Payment confirmation is being processed. Please check your Stripe receipt. Your basket is preserved until you update it.');
-    if (payment === 'cancelled') setMessage('Payment was cancelled. Your basket is saved.');
+    if (payment === 'returned')
+      setMessage(
+        'This return link cannot verify your payment. Please contact order@doko-e.com if you need help confirming your order.',
+      );
+    if (payment === 'cancelled')
+      setMessage('Payment was cancelled. Your basket is saved.');
     try {
       const cart = JSON.parse(localStorage.getItem('doko-basket') || '{}');
       if (cart && typeof cart === 'object' && !Array.isArray(cart))
@@ -70,7 +74,8 @@ export default function Checkout() {
       if (!response.ok || !data.quote)
         throw Error(data.error || 'Checkout is temporarily unavailable.');
       setQuote(data.quote);
-      if (payment && data.checkout_url) window.location.assign(data.checkout_url);
+      if (payment && data.checkout_url)
+        window.location.assign(data.checkout_url);
     } catch (e) {
       setQuote(null);
       setError(e instanceof Error ? e.message : 'Please try again.');
@@ -185,7 +190,9 @@ export default function Checkout() {
                   </div>
                   <div>
                     <dt>Shipping</dt>
-                    <dd>{quote.shipping === 0 ? 'Free' : 'Calculated on Stripe'}</dd>
+                    <dd>
+                      {quote.shipping === 0 ? 'Free' : 'Calculated on Stripe'}
+                    </dd>
                   </div>
                   <div>
                     <dt>Tax</dt>
