@@ -3,6 +3,12 @@ import type { SiteSettings } from '@/models/SiteSettings';
 import type { FeaturedSpecial } from '@/models/FeaturedSpecial';
 export function validateSettings(s: SiteSettings) {
   const e: string[] = [];
+  if (
+    s.delivery_instructions !== undefined &&
+    (typeof s.delivery_instructions !== 'string' ||
+      s.delivery_instructions.length > 2000)
+  )
+    e.push('Delivery instructions must be text under 2000 characters');
   for (const k of [
     'site_name',
     'hero_title',

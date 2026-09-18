@@ -29,6 +29,13 @@
       "when": 1789660000000,
       "tag": "0003_product_tax_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789750000000,
+      "tag": "0004_greater_boston_delivery",
+      "breakpoints": true
     }
   ]
 }

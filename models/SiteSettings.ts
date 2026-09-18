@@ -5,6 +5,7 @@ export interface SiteSettings {
   hero_subtitle: string;
   shipping_message: string;
   free_shipping_threshold: number;
+  delivery_instructions?: string;
   support_email: string;
   announcement: string;
   special_enabled: boolean;

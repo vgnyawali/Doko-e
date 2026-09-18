@@ -1,4 +1,12 @@
 'use client';
+import { useState, useEffect } from 'react';
+import FulfillmentChoice from '@/components/FulfillmentChoice';
+import {
+  canFulfill,
+  deliveryFallback,
+  type FulfillmentMethod,
+} from '@/services/fulfillment';
+import type { SiteSettings } from '@/models/SiteSettings';
 import { ShoppingBasket } from 'lucide-react';
 import {
   Sheet,
@@ -15,6 +23,7 @@ export default function CartPanel({
   cart,
   products,
   threshold,
+  settings,
   onChange,
 }: {
   open: boolean;
@@ -22,8 +31,24 @@ export default function CartPanel({
   cart: Cart;
   products: Product[];
   threshold: number;
+  settings: SiteSettings;
   onChange: (cart: Cart) => void;
 }) {
+  const [method, setMethod] = useState<FulfillmentMethod>('shipping');
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('doko-fulfillment') === 'delivery')
+        setMethod('delivery');
+    } catch {}
+  }, []);
+  function choose(value: FulfillmentMethod) {
+    setMethod(value);
+    try {
+      localStorage.setItem('doko-fulfillment', value);
+    } catch {}
+  }
+  const eligible = (m: FulfillmentMethod) =>
+    products.filter((p) => cart[p.id]).every((p) => canFulfill(p, m, settings));
   const count = Object.values(cart).reduce((a, b) => a + b, 0),
     subtotal = cartSubtotal(cart, products);
   return (
@@ -77,17 +102,36 @@ export default function CartPanel({
                 </article>
               ))}
             <div className="cart-total">
+              <FulfillmentChoice
+                value={method}
+                onChange={choose}
+                deliveryDisabled={!eligible('delivery')}
+                shippingDisabled={!eligible('shipping')}
+              />
               <div>
                 <strong>Subtotal</strong>
                 <strong>${subtotal.toFixed(2)}</strong>
               </div>
               <p>
-                {subtotal >= threshold
-                  ? 'Your basket qualifies for free shipping.'
-                  : `You’re $${(threshold - subtotal).toFixed(2)} away from free shipping.`}
+                {method === 'delivery'
+                  ? settings.delivery_instructions || deliveryFallback
+                  : subtotal >= threshold
+                    ? 'Your basket qualifies for free shipping.'
+                    : `You’re $${(threshold - subtotal).toFixed(2)} away from free shipping.`}
               </p>
-              <p>Shipping eligibility is checked at checkout.</p>
-              <a className="primary-button" href="/checkout">
+              {!eligible(method) && (
+                <p role="alert">
+                  Choose an available option for all basket items.
+                </p>
+              )}
+              <a
+                className="primary-button"
+                href={`/checkout?fulfillment=${method}`}
+                aria-disabled={!eligible(method)}
+                onClick={(e) => {
+                  if (!eligible(method)) e.preventDefault();
+                }}
+              >
                 Continue to checkout
               </a>
             </div>

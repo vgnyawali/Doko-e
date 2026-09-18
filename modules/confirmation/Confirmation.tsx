@@ -27,7 +27,11 @@ export function PaidReceipt({ order: o }: { order: Receipt }) {
         <h2 lang="ne">धन्यवाद!</h2>
         <p>
           Your payment was successful, and we’ve received your order. We’ll now
-          prepare your items for shipment.
+          prepare your items for{' '}
+          {o.fulfillment_method === 'delivery'
+            ? 'Greater Boston delivery'
+            : 'shipment'}
+          .
         </p>
         <p lang="ne" className={styles.nepali}>
           नेपालसँगको आत्मीयता तपाईंको घरसम्म पुर्‍याउन पाउँदा हामीलाई गर्व र खुसी लागेको छ।
@@ -66,7 +70,11 @@ export function PaidReceipt({ order: o }: { order: Receipt }) {
                 <dd>{o.email}</dd>
               </div>
               <div>
-                <dt>Shipping Address</dt>
+                <dt>
+                  {o.fulfillment_method === 'delivery'
+                    ? 'Delivery Address'
+                    : 'Shipping Address'}
+                </dt>
                 <dd>
                   <address>
                     {o.address.map((line, i) => (
@@ -116,7 +124,9 @@ export function PaidReceipt({ order: o }: { order: Receipt }) {
               <dd>{usd(o.subtotal)}</dd>
             </div>
             <div>
-              <dt>Shipping</dt>
+              <dt>
+                {o.fulfillment_method === 'delivery' ? 'Delivery' : 'Shipping'}
+              </dt>
               <dd>{usd(o.shipping)}</dd>
             </div>
             <div>
@@ -155,7 +165,13 @@ export function PaidReceipt({ order: o }: { order: Receipt }) {
           {[
             { name: 'Order received', icon: Check },
             { name: 'Preparing your Doko', icon: Package },
-            { name: 'Shipping confirmation sent', icon: Truck },
+            {
+              name:
+                o.fulfillment_method === 'delivery'
+                  ? 'Delivery confirmation sent'
+                  : 'Shipping confirmation sent',
+              icon: Truck,
+            },
             { name: 'Delivered to your door', icon: House },
           ].map((s, i) => (
             <li key={s.name} className={i === 0 ? styles.current : ''}>
@@ -170,8 +186,9 @@ export function PaidReceipt({ order: o }: { order: Receipt }) {
           ))}
         </ol>
         <p>
-          Once your order ships, we’ll send tracking information to your email
-          when available.
+          {o.fulfillment_method === 'delivery'
+            ? 'We’ll contact you by email to coordinate your Greater Boston delivery.'
+            : 'Once your order ships, we’ll send tracking information to your email when available.'}
         </p>
       </section>
       <section className={styles.email}>

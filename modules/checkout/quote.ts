@@ -6,8 +6,15 @@ import {
   type TaxLine,
 } from '@/services/taxService';
 import type { BundleComponent } from '@/models/BundleComponent';
+import {
+  canFulfill,
+  deliveryFallback,
+  type FulfillmentMethod,
+} from '@/services/fulfillment';
 
 export interface CheckoutRequest {
+  fulfillment_method?: FulfillmentMethod;
+  delivery_area_confirmed?: boolean;
   items: { product_id: string; quantity: number }[];
   customer: {
     name: string;
@@ -20,6 +27,8 @@ export interface CheckoutRequest {
   };
 }
 export interface CheckoutQuote {
+  fulfillment_method?: FulfillmentMethod;
+  delivery_instructions?: string;
   items: {
     product_id: string;
     name: string;
@@ -60,6 +69,13 @@ export function quoteCheckout(
   )
     throw Error('Your basket must contain between 1 and 100 products.');
   const customer = input.customer;
+  const method = input.fulfillment_method ?? 'shipping';
+  if (!['shipping', 'delivery'].includes(method))
+    throw Error('Choose delivery or shipping.');
+  if (method === 'delivery' && input.delivery_area_confirmed !== true)
+    throw Error(
+      'Confirm your delivery address is in the Greater Boston area, or choose shipping.',
+    );
   if (
     !customer ||
     ['name', 'email', 'address', 'city', 'state', 'zip', 'country'].some(
@@ -90,14 +106,9 @@ export function quoteCheckout(
       throw Error('Invalid basket quantities or duplicate products.');
     seen.add(item.product_id);
     const p = products.find((p) => p.id === item.product_id);
-    if (
-      !p ||
-      !p.active ||
-      p.shipping_type !== 'nationwide' ||
-      !settings.shipping_enabled.nationwide
-    )
+    if (!p || !canFulfill(p, method, settings))
       throw Error(
-        'A basket item is not available for U.S. shipping. Return to your basket to update it.',
+        `A basket item is not available for ${method}. Return to your basket to update it.`,
       );
     if (item.quantity > p.inventory)
       throw Error(`Only ${p.inventory} ${p.name} remain. Update your basket.`);
@@ -131,6 +142,11 @@ export function quoteCheckout(
       'This basket exceeds Stripe’s 100 tax-portion limit. Please split it into smaller orders.',
     );
   return {
+    fulfillment_method: method,
+    delivery_instructions:
+      method === 'delivery'
+        ? settings.delivery_instructions || deliveryFallback
+        : undefined,
     items,
     subtotal,
     taxable_subtotal:
@@ -141,7 +157,10 @@ export function quoteCheckout(
       taxLines
         .filter((l) => !l.taxable)
         .reduce((s, l) => s + l.unit_amount * l.quantity, 0) / 100,
-    shipping: subtotal >= settings.free_shipping_threshold ? 0 : null,
+    shipping:
+      method === 'delivery' || subtotal >= settings.free_shipping_threshold
+        ? 0
+        : null,
     tax: null,
     total: null,
     currency: 'USD',

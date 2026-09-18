@@ -49,6 +49,12 @@ export default function OrdersView() {
           <article key={o.id}>
             <h3>Order {o.id.slice(0, 12)}</h3>
             <p>
+              Fulfillment:{' '}
+              {q.fulfillment_method === 'delivery'
+                ? 'Greater Boston delivery'
+                : 'U.S. shipping'}
+            </p>
+            <p>
               Status: {o.status} · Stripe session:{' '}
               {o.session_id || 'Not created'}
             </p>

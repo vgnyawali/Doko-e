@@ -25,12 +25,18 @@ export function sessionParameters(
     client_reference_id: orderId,
     'metadata[doko_order_id]': orderId,
     'automatic_tax[enabled]': 'true',
-    'shipping_address_collection[allowed_countries][0]': 'US',
+    'metadata[fulfillment_method]': q.fulfillment_method || 'shipping',
     success_url: `${origin}/checkout/confirmation?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/checkout?payment=cancelled`,
     'custom_text[submit][message]':
       'All sales are final. Please review your order before paying.',
   });
+  body.set('shipping_address_collection[allowed_countries][0]', 'US');
+  if (q.fulfillment_method === 'delivery')
+    body.set(
+      'custom_text[shipping_address][message]',
+      'Greater Boston delivery only. Use your Greater Boston delivery address.',
+    );
   q.items
     .flatMap((item) => item.tax_lines)
     .forEach((item, i) => {
@@ -63,7 +69,9 @@ export function sessionParameters(
     );
     body.set(
       'shipping_options[0][shipping_rate_data][display_name]',
-      'Free U.S. shipping',
+      q.fulfillment_method === 'delivery'
+        ? 'Greater Boston delivery'
+        : 'Free U.S. shipping',
     );
   } else
     body.set(

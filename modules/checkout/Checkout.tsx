@@ -3,6 +3,11 @@ import { useEffect, useState } from 'react';
 import BrandLogo from '@/components/BrandLogo';
 import type { CheckoutQuote, CheckoutRequest } from './quote';
 import styles from './checkout.module.css';
+import FulfillmentChoice from '@/components/FulfillmentChoice';
+import {
+  deliveryFallback,
+  type FulfillmentMethod,
+} from '@/services/fulfillment';
 
 export default function Checkout() {
   const [items, setItems] = useState<CheckoutRequest['items']>([]);
@@ -21,6 +26,8 @@ export default function Checkout() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [attempt, setAttempt] = useState('');
+  const [method, setMethod] = useState<FulfillmentMethod>('shipping');
+  const [areaConfirmed, setAreaConfirmed] = useState(false);
   useEffect(() => {
     setAttempt(crypto.randomUUID());
     const payment = new URLSearchParams(window.location.search).get('payment');
@@ -31,6 +38,10 @@ export default function Checkout() {
     if (payment === 'cancelled')
       setMessage('Payment was cancelled. Your basket is saved.');
     try {
+      const selected =
+        new URLSearchParams(window.location.search).get('fulfillment') ||
+        localStorage.getItem('doko-fulfillment');
+      setMethod(selected === 'delivery' ? 'delivery' : 'shipping');
       const cart = JSON.parse(localStorage.getItem('doko-basket') || '{}');
       if (cart && typeof cart === 'object' && !Array.isArray(cart))
         setItems(
@@ -56,7 +67,13 @@ export default function Checkout() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items, customer, attempt }),
+          body: JSON.stringify({
+            items,
+            customer,
+            attempt,
+            fulfillment_method: method,
+            delivery_area_confirmed: areaConfirmed,
+          }),
         },
       );
       const data = (await response.json()) as {
@@ -108,7 +125,25 @@ export default function Checkout() {
               void submit();
             }}
           >
-            <h2>Contact & shipping</h2>
+            <h2>
+              {method === 'delivery'
+                ? 'Contact & delivery address'
+                : 'Contact & shipping address'}
+            </h2>
+            <FulfillmentChoice
+              value={method}
+              onChange={(v) => {
+                setMethod(v);
+                setQuote(null);
+                setAreaConfirmed(false);
+                try {
+                  localStorage.setItem('doko-fulfillment', v);
+                } catch {}
+              }}
+            />
+            {method === 'delivery' && (
+              <p>{quote?.delivery_instructions || deliveryFallback}</p>
+            )}
             <fieldset disabled={busy} className={styles.fields}>
               {(
                 ['name', 'email', 'address', 'city', 'state', 'zip'] as const
@@ -155,6 +190,7 @@ export default function Checkout() {
                             : e.target.value,
                       });
                       setQuote(null);
+                      setAreaConfirmed(false);
                       setMessage('');
                     }}
                   />
@@ -165,6 +201,20 @@ export default function Checkout() {
                 <input value="United States" readOnly />
               </label>
             </fieldset>
+            {method === 'delivery' && (
+              <label style={{ display: 'flex', gap: 10, margin: '16px 0' }}>
+                <input
+                  type="checkbox"
+                  required
+                  checked={areaConfirmed}
+                  onChange={(e) => {
+                    setAreaConfirmed(e.target.checked);
+                    setQuote(null);
+                  }}
+                />
+                My delivery address is in the Greater Boston area.
+              </label>
+            )}
             <button className="primary-button" disabled={busy}>
               {busy ? 'Checking…' : 'Review checkout'}
             </button>
@@ -189,7 +239,7 @@ export default function Checkout() {
                     <dd>${quote.subtotal.toFixed(2)}</dd>
                   </div>
                   <div>
-                    <dt>Shipping</dt>
+                    <dt>{method === 'delivery' ? 'Delivery' : 'Shipping'}</dt>
                     <dd>
                       {quote.shipping === 0 ? 'Free' : 'Calculated on Stripe'}
                     </dd>

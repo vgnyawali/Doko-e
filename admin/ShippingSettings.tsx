@@ -22,6 +22,12 @@ export default function ShippingSettings({
         onChange={(v) => onChange({ ...settings, shipping_message: v })}
       />
       <Field
+        label="Delivery address and instructions"
+        type="textarea"
+        value={settings.delivery_instructions || ''}
+        onChange={(v) => onChange({ ...settings, delivery_instructions: v })}
+      />
+      <Field
         label="free_shipping_threshold"
         type="number"
         value={settings.free_shipping_threshold}

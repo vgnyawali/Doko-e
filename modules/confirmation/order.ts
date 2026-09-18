@@ -38,6 +38,7 @@ export interface OrderSnapshot {
   confirmation_email_sent_at?: string;
 }
 export interface Receipt {
+  fulfillment_method?: 'shipping' | 'delivery';
   order_number: string;
   order_date: string | null;
   payment_status: 'Paid';
@@ -101,6 +102,7 @@ export function confirmationFromOrder(row: OrderRow): ConfirmationResult {
     return {
       state: 'paid',
       order: {
+        fulfillment_method: q.fulfillment_method || 'shipping',
         order_number: `DOKO-${row.id.slice(0, 12).toUpperCase()}`,
         order_date:
           data.created_at ||

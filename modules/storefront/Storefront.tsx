@@ -301,6 +301,7 @@ export default function Storefront() {
         cart={validCart}
         products={products}
         threshold={settings.free_shipping_threshold}
+        settings={settings}
         onChange={updateCart}
       />
     </>

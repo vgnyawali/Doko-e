@@ -6,12 +6,14 @@ export const defaultSettings: SiteSettings = {
     'The Nepali essentials you grew up with. Thoughtfully selected, carefully packed, and brought to your door — anywhere in the U.S.',
   shipping_message: 'Nepali favorites. Delivered across the U.S.',
   free_shipping_threshold: 75,
+  delivery_instructions:
+    'Delivery is available in the Greater Boston area only. Enter your delivery address at checkout. Contact order@doko-e.com with delivery questions.',
   support_email: '',
   announcement: 'A little closer to home — now shipping nationwide',
   special_enabled: true,
   shipping_enabled: {
     nationwide: true,
-    local_only: false,
+    local_only: true,
     pickup_only: false,
     unavailable: false,
   },
