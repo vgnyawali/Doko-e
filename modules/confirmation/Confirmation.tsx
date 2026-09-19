@@ -9,6 +9,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
+import { completeOrderBasket } from '@/modules/cart/completeOrder';
 import type { ConfirmationResult, Receipt } from './order';
 import styles from './confirmation.module.css';
 const usd = (n: number) =>
@@ -252,6 +253,11 @@ export default function Confirmation() {
         if (!response.ok) {
           setResult({ state: 'unverified' });
           return;
+        }
+        if (data.state === 'paid') {
+          try { completeOrderBasket(localStorage, id!, data); } catch {
+            // Storage restrictions must never hide a verified payment receipt.
+          }
         }
         setResult(data);
         if (data.state === 'processing') {

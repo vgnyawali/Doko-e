@@ -36,6 +36,23 @@ export default function Storefront() {
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState('');
   useEffect(() => {
+    const syncBasket = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('doko-basket') || '{}');
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) setCart(saved);
+      } catch {}
+    };
+    const onStorage = (event: StorageEvent) => { if (event.key === 'doko-basket' || event.key === null) syncBasket(); };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('pageshow', syncBasket);
+    window.addEventListener('focus', syncBasket);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('pageshow', syncBasket);
+      window.removeEventListener('focus', syncBasket);
+    };
+  }, []);
+  useEffect(() => {
     fetch('/api/store')
       .then((r) => {
         if (!r.ok) throw Error();
