@@ -139,6 +139,23 @@ em {
   font-size: 14px;
   font-weight: 600;
 }
+.product-request-form { flex: 1; max-width: 640px; min-width: 0; margin: 0 24px; }
+.product-request-form > label { display: block; font-weight: 700; font-size: 16px; color: var(--red); }
+.product-request-form p { margin: 5px 0 9px; font-size: 14px; line-height: 1.4; }
+.product-request-entry { display: flex; align-items: center; gap: 10px; }
+.product-request-entry textarea { flex: 1; min-width: 0; resize: vertical; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 14px; background: #fff; }
+.product-request-entry button { padding: 11px 15px; font-size: 14px; white-space: nowrap; }
+.request-honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.product-requests-admin .admin-toolbar { flex-wrap: wrap; }
+.product-requests-admin select, .product-requests-admin textarea { border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; background: white; }
+.product-requests-admin textarea { min-width: 180px; }
+.request-message { min-width: 190px; max-width: 340px; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 800px) {
+  .site-header:has(.product-request-form) { flex-wrap: wrap; gap: 16px; }
+  .product-request-form { order: 3; flex-basis: 100%; max-width: none; margin: 0; }
+  .product-request-entry textarea { font-size: 16px; }
+}
+@media (max-width: 420px) { .product-request-entry { align-items: stretch; flex-direction: column; } .product-request-entry button { align-self: flex-start; } }
 .site-header nav a:hover {
   color: var(--red);
 }

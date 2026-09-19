@@ -32,6 +32,7 @@ import SheetsImport from './SheetsImport';
 import SpecialsEditor from './SpecialsEditor';
 import SiteSettingsEditor from './SiteSettingsEditor';
 import OrdersView from './OrdersView';
+import ProductRequests from './ProductRequests';
 import { taxClasses } from '@/config/tax';
 type Store = {
   products: Product[];
@@ -54,6 +55,13 @@ export default function AdminDashboard({
     id: string;
   } | null>(null);
   const [search, setSearch] = useState('');
+  const [newRequests, setNewRequests] = useState<number | null>(null);
+  useEffect(() => {
+    const refresh = () => { void fetch('/api/admin/product-requests', {cache:'no-store'}).then(r => r.ok ? r.json() as Promise<{new_count:number}> : null).then(d => {if (d) setNewRequests(d.new_count);}).catch(() => {}); };
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => window.removeEventListener('focus', refresh);
+  }, []);
   async function request(data: unknown) {
     const r = await fetch('/api/admin', {
       method: 'POST',
@@ -169,6 +177,7 @@ export default function AdminDashboard({
           <TabsTrigger value="import">Google Sheets import</TabsTrigger>
           <TabsTrigger value="specials">Featured specials</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="requests">Product Requests{newRequests !== null ? ` (${newRequests})` : ''}</TabsTrigger>
           <TabsTrigger value="settings">Site & shipping settings</TabsTrigger>
         </TabsList>
         <TabsContent value="products">
@@ -327,6 +336,7 @@ export default function AdminDashboard({
         <TabsContent value="orders">
           <OrdersView />
         </TabsContent>
+        <TabsContent value="requests"><ProductRequests onCount={setNewRequests} /></TabsContent>
       </Tabs>
       <Sheet
         open={!!editor}

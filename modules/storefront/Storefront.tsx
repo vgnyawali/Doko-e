@@ -1,5 +1,6 @@
 'use client';
 import BrandLogo from '@/components/BrandLogo';
+import ProductRequestForm from '@/components/ProductRequestForm';
 import { useEffect, useState } from 'react';
 import {
   ShoppingBasket,
@@ -100,11 +101,7 @@ export default function Storefront() {
       </div>
       <header className="site-header">
         <BrandLogo name={settings.site_name} />
-        <nav aria-label="Main navigation">
-          <a href="#shop">Shop the pantry</a>
-          <a href="#specials">Seasonal specials</a>
-          <a href="#how">How it works</a>
-        </nav>
+        <ProductRequestForm />
         <button className="basket-button" onClick={() => setBasket(true)}>
           <ShoppingBasket size={19} />
           <span>Basket</span>
