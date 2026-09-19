@@ -163,7 +163,7 @@ export default function Storefront() {
         </section>
         <div className="trust-strip">
           <span>
-            <Heart size={17} /> Familiar flavors, thoughtfully selected
+            <Heart size={17} /> Familiar items, thoughtfully selected
           </span>
           <span>
             <Truck size={18} /> Shipping across the U.S.

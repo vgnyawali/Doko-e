@@ -271,11 +271,14 @@ em {
 }
 .trust-strip {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 7%;
   padding: 21px 5%;
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 .trust-strip span {
   display: flex;
@@ -824,7 +827,7 @@ footer {
     padding: 18px 6%;
     justify-content: space-between;
     gap: 15px;
-    font-size: 10px;
+    font-size: 15px;
   }
   .trust-strip span:first-child {
     display: none;
