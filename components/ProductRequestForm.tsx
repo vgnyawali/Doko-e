@@ -15,10 +15,9 @@ export default function ProductRequestForm() {
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to send your request. Please try again.'); }
     finally { setBusy(false); }
   }}>
-    <label htmlFor="product-request">What would you like to see from Doko next?</label>
-    <p id="request-help">Tell us what Nepali, South Asian, cultural, household, festival, food, or specialty products you’d like us to carry.</p>
+    <label htmlFor="product-request">What item do you want?</label>
     <div className="product-request-entry">
-      <textarea id="product-request" aria-describedby="request-help" required minLength={2} maxLength={500} rows={2} value={text} disabled={busy} onChange={e => {setText(e.target.value); setSent(false);}} placeholder="Example: Gundruk, puja items, Nepali tea, gifts, kitchen items..." />
+      <textarea id="product-request" required minLength={2} maxLength={500} rows={2} value={text} disabled={busy} onChange={e => {setText(e.target.value); setSent(false);}} placeholder="Example: Gundruk, puja items, Nepali tea, gifts, kitchen items..." />
       <button className="primary-button" disabled={busy}>{busy ? 'Sending…' : 'Send Request'}</button>
     </div>
     <div className="request-honeypot" aria-hidden="true"><label>Website<input tabIndex={-1} autoComplete="off" value={website} onChange={e => setWebsite(e.target.value)} /></label></div>
