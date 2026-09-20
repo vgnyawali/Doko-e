@@ -1,6 +1,7 @@
 import { shippingTypes, type Product } from '@/models/Product';
 import type { SiteSettings } from '@/models/SiteSettings';
 import type { FeaturedSpecial } from '@/models/FeaturedSpecial';
+import { validateHover } from '@/models/Promotion';
 export function validateSettings(s: SiteSettings) {
   const e: string[] = [];
   if (
@@ -33,7 +34,7 @@ export function validateSettings(s: SiteSettings) {
   return e;
 }
 export function validateSpecial(s: FeaturedSpecial, products: Product[]) {
-  const e: string[] = [];
+  const e: string[] = validateHover(s);
   for (const k of [
     'id',
     'product_id',

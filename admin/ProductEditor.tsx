@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { type Product, shippingTypes, validateProduct } from '@/models/Product';
 import { Field, Choice, Toggle } from './Fields';
 import ImageUploadField from './ImageUploadField';
+import PromotionFields from './PromotionFields';
 import TaxFields from './TaxFields';
 import BundleEditor from './BundleEditor';
 import { normalizeProduct } from '@/services/taxService';
@@ -40,7 +41,7 @@ export default function ProductEditor({
         {Object.keys(draft)
           .filter(
             (k) =>
-              ![
+              !k.startsWith('hover_popup_') && ![
                 'active',
                 'featured',
                 'shipping_type',
@@ -123,6 +124,7 @@ export default function ProductEditor({
           onChange={(v) => update('featured', v)}
         />
       </div>
+      {draft.featured && <PromotionFields value={draft} onChange={v => setDraft({...draft,...v})} />}
       {errors.length > 0 && (
         <p className="error" role="alert">
           {errors.join(' · ')}

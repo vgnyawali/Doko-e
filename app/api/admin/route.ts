@@ -19,8 +19,10 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Invalid origin' }, { status: 403 });
   try {
     const body = await request.text();
-    if (body.length > 2_000_000) throw Error('Request too large.');
+    if (body.length > 4_500_000) throw Error('Request too large.');
     const { action, ...data } = JSON.parse(body);
+    // A featured special may include its hero, popup and linked product images.
+    if (action !== 'special' && body.length > 2_000_000) throw Error('Request too large.');
     const store = await readStore();
     if (action === 'preview') {
       const url = sheetCSVUrl(data.url);

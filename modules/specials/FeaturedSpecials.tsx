@@ -5,6 +5,7 @@ import {
   type FeaturedSpecial,
 } from '@/models/FeaturedSpecial';
 import type { Product } from '@/models/Product';
+import FeaturedHover from '@/modules/promotions/FeaturedHover';
 export default function FeaturedSpecials({
   specials,
   products,
@@ -31,10 +32,10 @@ export default function FeaturedSpecials({
           const p = products.find((p) => p.id === s.product_id && p.active);
           return p ? (
             <section className="special section" key={s.id} id="specials">
-              <div className="special-image">
+              <FeaturedHover config={s} id={s.id} title={s.headline} className="special-promotion-trigger"><div className="special-image">
                 <img src={s.hero_image || p.image_url} alt={p.name} />
                 <span lang="ne">दशैंको शुभकामना</span>
-              </div>
+              </div></FeaturedHover>
               <div className="special-copy">
                 <p className="eyebrow">
                   A season for togetherness · {s.occasion}

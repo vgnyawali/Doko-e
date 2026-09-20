@@ -1,4 +1,5 @@
-export interface FeaturedSpecial {
+import type { PromotionalHover } from './Promotion';
+export interface FeaturedSpecial extends PromotionalHover {
   id: string;
   product_id: string;
   occasion: string;

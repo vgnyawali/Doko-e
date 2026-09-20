@@ -1,5 +1,6 @@
 import type { TaxConfiguration, BundleComponent } from './BundleComponent';
 import { taxDefaults } from '@/config/tax';
+import { validateHover, type PromotionalHover } from './Promotion';
 import { validateProductTax } from '@/services/taxService';
 export const shippingTypes = [
   'nationwide',
@@ -8,7 +9,7 @@ export const shippingTypes = [
   'unavailable',
 ] as const;
 export type ShippingType = (typeof shippingTypes)[number];
-export interface Product extends TaxConfiguration {
+export interface Product extends TaxConfiguration, PromotionalHover {
   product_type: 'normal' | 'bundle';
   components: BundleComponent[];
   id: string;
@@ -56,7 +57,7 @@ export const emptyProduct: Product = {
   shipping_type: 'nationwide',
 };
 export function validateProduct(p: Product): string[] {
-  const errors: string[] = [];
+  const errors: string[] = validateHover(p);
   for (const field of [
     'nepali_name',
     'description',

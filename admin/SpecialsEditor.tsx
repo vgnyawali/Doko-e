@@ -9,6 +9,7 @@ import { normalizeProduct } from '@/services/taxService';
 import { Field, Choice, Toggle } from './Fields';
 import ProductEditor from './ProductEditor';
 import ImageUploadField from './ImageUploadField';
+import PromotionFields from './PromotionFields';
 export default function SpecialsEditor({
   specials,
   products,
@@ -54,7 +55,7 @@ export default function SpecialsEditor({
   return (
     <section className="admin-card">
       <div className="admin-toolbar">
-        <h2>Seasonal specials</h2>
+        <h2>Featured Products</h2>
         <button
           className="primary-button"
           onClick={() =>
@@ -171,6 +172,7 @@ export default function SpecialsEditor({
             checked={draft.active}
             onChange={(v) => setDraft({ ...draft, active: v })}
           />
+          <PromotionFields value={draft} onChange={v => setDraft({...draft,...v})} />
           {error && (
             <p className="error" role="alert">
               {error}

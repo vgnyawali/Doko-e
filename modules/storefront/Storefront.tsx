@@ -1,6 +1,7 @@
 'use client';
 import BrandLogo from '@/components/BrandLogo';
 import ProductRequestForm from '@/components/ProductRequestForm';
+import FlashAdPopup from '@/modules/promotions/FlashAdPopup';
 import { useEffect, useState } from 'react';
 import {
   ShoppingBasket,
@@ -111,6 +112,7 @@ export default function Storefront() {
   };
   return (
     <>
+      <FlashAdPopup />
       <div className="announcement">
         <span>नमस्ते, welcome to Doko</span>
         <span>{settings.announcement}</span>

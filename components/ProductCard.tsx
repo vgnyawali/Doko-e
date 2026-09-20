@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { Product } from '@/models/Product';
 import type { SiteSettings } from '@/models/SiteSettings';
 import QuantitySelector from './QuantitySelector';
+import FeaturedHover from '@/modules/promotions/FeaturedHover';
 import { canPurchase, shippingLabels } from '@/services/shipping';
 export function ProductDetails({ product: p }: { product: Product }) {
   return (
@@ -36,6 +37,7 @@ export default function ProductCard({
   return (
     <article className="product-card">
       <div className="product-photo">
+        {p.featured && p.hover_popup_enabled && p.hover_popup_image_url ? <FeaturedHover config={p} id={p.id} title={p.name} className="image-button"><img src={p.image_url} alt={p.name} loading="lazy" /><span className="view-hint">View promotion ↗</span></FeaturedHover> : <>
         <button
           className="image-button"
           onClick={() => onView(p)}
@@ -47,6 +49,7 @@ export default function ProductCard({
         <div className="hover-details">
           <ProductDetails product={p} />
         </div>
+        </>}
         {p.featured && <span className="product-badge">Doko favorite</span>}
       </div>
       <div className="product-meta">

@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 await mkdir('work', { recursive: true });
 for (const [entry, name] of [
+  ['tests/promotions.test.ts', 'promotions'],
   ['tests/complete-order-basket.test.ts', 'complete-order-basket'],
   ['tests/product-requests.test.ts', 'product-requests'],
   ['tests/customer-export.test.ts', 'customer-export'],

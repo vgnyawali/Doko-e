@@ -27,12 +27,14 @@ function resizeImage(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
-export default function ImageUploadField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+export default function ImageUploadField({ label, value, onChange, maxInputBytes = Infinity, acceptedTypes }: { label: string; value: string; onChange: (value: string) => void; maxInputBytes?: number; acceptedTypes?: string[] }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   async function choose(file: File | undefined) {
     if (!file) return;
+    if (file.size > maxInputBytes) { setError('Image file is too large. Maximum input size is 10 MB.'); return; }
+    if (acceptedTypes && !acceptedTypes.includes(file.type)) {setError('Choose a JPG, PNG or WebP image.'); return;}
     if (!file.type.startsWith('image/')) { setError('Choose an image file.'); return; }
     setBusy(true); setError('');
     try { onChange(await resizeImage(file)); }
@@ -43,7 +45,7 @@ export default function ImageUploadField({ label, value, onChange }: { label: st
     <div className="admin-field image-upload-field">
       <span>{label}</span>
       <div className="image-upload-controls">
-        <input ref={input} type="file" accept="image/*" onChange={(e) => void choose(e.target.files?.[0])} />
+        <input ref={input} type="file" accept={acceptedTypes?.join(',') || 'image/*'} onChange={(e) => void choose(e.target.files?.[0])} />
         <button type="button" onClick={() => input.current?.click()} disabled={busy}>{busy ? 'Processing…' : value ? 'Replace image' : 'Upload image'}</button>
         {value && <img src={value} alt="Selected preview" />}
       </div>

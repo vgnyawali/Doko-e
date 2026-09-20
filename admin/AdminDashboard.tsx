@@ -33,6 +33,8 @@ import SpecialsEditor from './SpecialsEditor';
 import SiteSettingsEditor from './SiteSettingsEditor';
 import OrdersView from './OrdersView';
 import ProductRequests from './ProductRequests';
+import FlashAds from './FlashAds';
+import ShippingSettings from './ShippingSettings';
 import { taxClasses } from '@/config/tax';
 type Store = {
   products: Product[];
@@ -56,6 +58,7 @@ export default function AdminDashboard({
   } | null>(null);
   const [search, setSearch] = useState('');
   const [newRequests, setNewRequests] = useState<number | null>(null);
+  const [deliveryDraft, setDeliveryDraft] = useState<SiteSettings | null>(null);
   useEffect(() => {
     const refresh = () => { void fetch('/api/admin/product-requests', {cache:'no-store'}).then(r => r.ok ? r.json() as Promise<{new_count:number}> : null).then(d => {if (d) setNewRequests(d.new_count);}).catch(() => {}); };
     refresh();
@@ -175,10 +178,12 @@ export default function AdminDashboard({
         <TabsList className="admin-tabs">
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="import">Google Sheets import</TabsTrigger>
-          <TabsTrigger value="specials">Featured specials</TabsTrigger>
+          <TabsTrigger value="specials">Featured Products</TabsTrigger>
+          <TabsTrigger value="flash-ads">Flash Ads</TabsTrigger>
+          <TabsTrigger value="delivery">Delivery Areas</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="requests">Product Requests{newRequests !== null ? ` (${newRequests})` : ''}</TabsTrigger>
-          <TabsTrigger value="settings">Site & shipping settings</TabsTrigger>
+          <TabsTrigger value="settings">Site Settings</TabsTrigger>
         </TabsList>
         <TabsContent value="products">
           <section className="admin-card">
@@ -337,6 +342,8 @@ export default function AdminDashboard({
           <OrdersView />
         </TabsContent>
         <TabsContent value="requests"><ProductRequests onCount={setNewRequests} /></TabsContent>
+        <TabsContent value="flash-ads"><FlashAds /></TabsContent>
+        <TabsContent value="delivery"><ShippingSettings settings={deliveryDraft || store.settings} onChange={setDeliveryDraft} /><button className="primary-button" disabled={busy || !deliveryDraft} onClick={() => void mutate({action:'settings',settings:deliveryDraft}).then(() => setDeliveryDraft(null))}>Save delivery settings</button></TabsContent>
       </Tabs>
       <Sheet
         open={!!editor}

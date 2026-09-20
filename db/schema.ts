@@ -1,4 +1,8 @@
 import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
+export const flashAds = sqliteTable('flash_ads', {
+  id: text('id').primaryKey(),
+  data: text('data').notNull(),
+});
 export const productRequests = sqliteTable('product_requests', {
   id: text('id').primaryKey(),
   request_text: text('request_text').notNull(),
