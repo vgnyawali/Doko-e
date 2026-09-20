@@ -8,6 +8,7 @@ import {
   validateHover,
   validPromoImage,
   safePromoLink,
+  safeFlashDestination,
   type FlashAd,
 } from '@/models/Promotion';
 import { saveFlashAd, readFlashAds } from '@/services/promotions';
@@ -25,6 +26,17 @@ const ad: FlashAd = {
   created_at: '2026-09-19T00:00:00Z',
   updated_at: '',
 };
+test('flash destinations accept internal routes and reject external or disguised destinations', () => {
+  for (const url of ['/', '/products/kit', '/specials/dashain', '/#featured-products']) {
+    assert.equal(safeFlashDestination(url), true);
+    assert.deepEqual(validateFlashAd({ ...ad, click_url: url, cta_text: '', cta_url: '' }), []);
+  }
+  for (const url of ['https://evil.example', '//evil.example', '/\\evil.example', '/%2fevil.example', '/%5cevil.example', '/%0aevil', 'javascript:alert(1)', '/%zz']) {
+    assert.equal(safeFlashDestination(url), false);
+    assert.ok(validateFlashAd({ ...ad, click_url: url }).length);
+  }
+  assert.deepEqual(validateFlashAd({ ...ad, click_url: '' }), []);
+});
 test('flash visibility is inclusive, inactive ads stay hidden, priority and newest break ties', () => {
   const now = Date.parse(ad.start_at);
   assert.equal(activeFlashAd([ad], now)?.id, 'one');
@@ -95,9 +107,11 @@ test('flash ads persist and edits preserve server-owned creation time', async ()
   const second = await saveFlashAd(db, {
     ...ad,
     title: 'Updated',
+    click_url: ' /#featured-products ',
     created_at: '1900-01-01',
   });
   assert.equal(second.created_at, first.created_at);
   assert.equal((await readFlashAds(db))[0].title, 'Updated');
+  assert.equal((await readFlashAds(db))[0].click_url, '/#featured-products');
   sql.close();
 });

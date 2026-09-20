@@ -23,3 +23,8 @@ Subscribe to the `doko:promotion` window CustomEvent. `event.detail` contains `{
 Migration `0006_deep_stellaris.sql` creates only `flash_ads(id, data)` in D1. Existing product/special JSON needs no backfill and old records default to disabled. The migration ships with the Site and is applied on deployment. No campaigns are created or activated automatically.
 
 `node scripts/test-checkout.mjs` covers flash timing boundaries, priority/tie ordering, safe URLs/image sizes, persistence and creation-timestamp preservation, alongside existing checkout tests. Local popup fixtures are kept in ignored preview storage and never shipped as real ads.
+# Clickable Flash Ads
+
+`click_url` is an optional, server-validated internal path saved in the existing flash_ads JSON record; no database migration is needed. Configure it in Admin > Flash Ads > Click Destination. Existing records without it remain supported.
+
+The card uses the site router through Next Link (Enter and Space supported). Its close button is a sibling, stops propagation, and only dismisses the modal. A card click dismisses it for the session and emits `flash_ad_click` with `id` and `destination_url`; views and closes retain their existing events. When a card destination is set, the separate legacy CTA is hidden to prevent nested or conflicting links. Featured hover links are unchanged.

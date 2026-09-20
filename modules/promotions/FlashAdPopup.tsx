@@ -45,12 +45,12 @@ export default function FlashAdPopup() {
     }, 1000);
     return () => clearInterval(timer);
   }, [ad]);
-  function close() {
+  function close(trackClose = true) {
     closedInMemory = true;
     try {
       sessionStorage.setItem(CLOSED, 'true');
     } catch {}
-    if (ad) promotionEvent('flash_ad_close', ad.id);
+    if (ad && trackClose) promotionEvent('flash_ad_close', ad.id);
     setAd(null);
   }
   if (!ad) return null;
@@ -64,6 +64,11 @@ export default function FlashAdPopup() {
       image={ad.image_url}
       title={ad.title}
       description={ad.description}
+      clickUrl={ad.click_url}
+      onCardClick={() => {
+        promotionEvent('flash_ad_click', ad.id, ad.click_url);
+        close(false);
+      }}
       ctaText={ad.cta_text}
       ctaUrl={ad.cta_url}
       onCta={() => {

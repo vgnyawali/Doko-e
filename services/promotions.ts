@@ -26,6 +26,7 @@ export async function saveFlashAd(db: D1Database, value: FlashAd) {
     title: value.title.trim(),
     description: value.description.trim(),
     image_url: value.image_url,
+    click_url: value.click_url?.trim() || '',
     cta_text: value.cta_text.trim(),
     cta_url: value.cta_url.trim(),
     active: value.active,

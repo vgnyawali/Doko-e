@@ -73,6 +73,7 @@ export default function FlashAds() {
               title: '',
               description: '',
               image_url: '',
+              click_url: '',
               cta_text: '',
               cta_url: '',
               active: false,
@@ -203,6 +204,9 @@ export default function FlashAds() {
             onChange={(v) => setDraft({ ...draft, image_url: v })}
           />
           <div className="form-grid">
+            <Field label="Click Destination (Internal Page / URL)"
+              value={draft.click_url || ''}
+              onChange={(v) => setDraft({ ...draft, click_url: v })} />
             {(['title', 'description', 'cta_text', 'cta_url'] as const).map(
               (k) => (
                 <Field
@@ -245,6 +249,9 @@ export default function FlashAds() {
             />
           </div>
           <p>
+            Click Destination makes the entire card clickable. Use an existing internal path such as /, /products/ghatasthapana-kit, /specials/dashain, or /#featured-products. Leave blank for a nonclickable card. No CTA button is required.
+          </p>
+          <p>
             Times use your browser’s timezone and are saved as UTC. Equal
             priorities show the newest ad.
           </p>
@@ -276,6 +283,8 @@ export default function FlashAds() {
           image={preview.image_url}
           title={preview.title || 'Flash ad preview'}
           description={preview.description}
+          clickUrl={preview.click_url?.trim()}
+          onCardClick={() => setPreview(null)}
           ctaText={preview.cta_text}
           ctaUrl={preview.cta_url}
           onCta={() => setPreview(null)}

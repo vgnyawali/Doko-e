@@ -11,6 +11,7 @@ export interface FlashAd {
   title: string;
   description: string;
   image_url: string;
+  click_url?: string;
   cta_text: string;
   cta_url: string;
   active: boolean;
@@ -19,6 +20,16 @@ export interface FlashAd {
   priority: number;
   created_at: string;
   updated_at: string;
+}
+// Root-relative destinations only; reject encoded slashes/control characters too.
+export function safeFlashDestination(value: string) {
+  if (!value || value.length > 500) return false;
+  try {
+    const decoded = decodeURIComponent(value);
+    return /^\/(?!\/)/.test(decoded) && !/[\\\s\u0000-\u001f\u007f]/.test(decoded);
+  } catch {
+    return false;
+  }
 }
 export function safePromoLink(value: string) {
   if (!value) return true;
@@ -94,7 +105,9 @@ export function validateFlashAd(a: FlashAd) {
     errors.push('Choose a valid start and end time');
   if (a.cta_url && !safePromoLink(a.cta_url))
     errors.push('CTA link must use HTTPS or a site path');
-  if (a.cta_text && !a.cta_url) errors.push('Add a link for the CTA button');
+  if (a.click_url !== undefined && (typeof a.click_url !== 'string' || (a.click_url.trim() && !safeFlashDestination(a.click_url.trim()))))
+    errors.push('Click Destination must be an internal page path, such as / or /#featured-products');
+  if (a.cta_text && !a.cta_url && !a.click_url) errors.push('Add a link for the CTA button');
   return errors;
 }
 export function activeFlashAd(ads: FlashAd[], now = Date.now()) {
