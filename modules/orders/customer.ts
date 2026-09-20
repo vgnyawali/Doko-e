@@ -51,7 +51,7 @@ export async function loadOrdersForExport(request: typeof fetch = fetch) {
   const orders: CheckoutOrder[] = [];
   let before: number | null = null;
   do {
-    const response = await request(`/api/admin/orders${before === null ? '' : `?before=${before}`}`, { cache: 'no-store' });
+    const response = await request(`/api/admin/orders?include_hidden=true${before === null ? '' : `&before=${before}`}`, { cache: 'no-store' });
     if (!response.ok) throw Error('Unable to export orders. Check your admin session and try again.');
     const page = await response.json() as { orders: CheckoutOrder[]; next_cursor: number | null };
     if (!Array.isArray(page.orders) || (page.next_cursor !== null &&

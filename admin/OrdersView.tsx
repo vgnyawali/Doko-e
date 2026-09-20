@@ -11,6 +11,18 @@ export default function OrdersView() {
   const [cursor, setCursor] = useState<number | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState('');
+  const [includeHidden, setIncludeHidden] = useState(false);
+  async function clearDisplayedOrders() {
+    if (!window.confirm('Hide all existing orders from the list? Payment records and receipts will be kept. You can view them using Show hidden orders.')) return;
+    setBusy(true); setError('');
+    try {
+      const response = await fetch('/api/admin/orders', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'hide_existing'})});
+      if (!response.ok) throw Error('Unable to clear the order list. Please try again.');
+      setIncludeHidden(false); setOrders([]); setCursor(null);
+      setExportMessage('Existing orders are hidden. New orders will appear here.');
+    } catch (e) {setError(e instanceof Error ? e.message : 'Unable to clear orders.');}
+    finally {setBusy(false);}
+  }
   async function exportCustomers() {
     setExporting(true);
     setError('');
@@ -37,7 +49,7 @@ export default function OrdersView() {
     setError('');
     try {
       const r = await fetch(
-        `/api/admin/orders${more && cursor ? `?before=${cursor}` : ''}`,
+        `/api/admin/orders?include_hidden=${includeHidden}${more && cursor ? `&before=${cursor}` : ''}`,
       );
       const d = (await r.json()) as {
         orders: CheckoutOrder[];
@@ -55,7 +67,7 @@ export default function OrdersView() {
   }
   useEffect(() => {
     void load();
-  }, []);
+  }, [includeHidden]);
   return (
     <section className="admin-card">
       <div className="admin-toolbar">
@@ -67,9 +79,14 @@ export default function OrdersView() {
           {exporting ? 'Exporting…' : 'Export customers to CSV'}
         </button>
       </div>
+      <div className="admin-toolbar">
+        <button disabled={busy || !orders.length} onClick={() => void clearDisplayedOrders()}>Clear displayed orders</button>
+        <label><input type="checkbox" checked={includeHidden} disabled={busy} onChange={e => setIncludeHidden(e.target.checked)} /> Show hidden orders</label>
+      </div>
+      <p>Clearing hides existing orders for all admins. Payment records and receipts are preserved. CSV exports include hidden orders.</p>
       {exportMessage && <p role="status">{exportMessage}</p>}
       {error && <p role="alert">{error}</p>}
-      {!orders.length && !busy && <p>No orders yet.</p>}
+      {!orders.length && !busy && <p>No orders to display.</p>}
       {orders.map((o) => {
         const q = o.data.quote,
           p = o.payment_data;

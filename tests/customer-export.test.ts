@@ -31,6 +31,6 @@ test('export loads every page and aborts on authorization failure rather than do
     return Response.json({orders:[order], next_cursor: urls.length === 1 ? 25 : null});
   }) as typeof fetch;
   assert.equal((await loadOrdersForExport(request)).length, 2);
-  assert.deepEqual(urls, ['/api/admin/orders', '/api/admin/orders?before=25']);
+  assert.deepEqual(urls, ['/api/admin/orders?include_hidden=true', '/api/admin/orders?include_hidden=true&before=25']);
   await assert.rejects(loadOrdersForExport((async () => new Response('', {status:403})) as typeof fetch), /admin session/);
 });
