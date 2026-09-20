@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 export const metadata: Metadata = {
   icons: { icon: '/logo.png' },
-  title: 'Doko — A little bit of Nepal, wherever you are',
+  title: 'Doko - घटस्थापना तथा दुर्गा पुजा सामग्री',
   description:
     'Nepali pantry essentials and seasonal favorites. Delivered across the United States.',
 };
