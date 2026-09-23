@@ -49,7 +49,7 @@ export default function OrdersView() {
     setError('');
     try {
       const r = await fetch(
-        `/api/admin/orders?include_hidden=${includeHidden}${more && cursor ? `&before=${cursor}` : ''}`,
+        `/api/admin/orders?paid_only=true&include_hidden=${includeHidden}${more && cursor ? `&before=${cursor}` : ''}`,
       );
       const d = (await r.json()) as {
         orders: CheckoutOrder[];
