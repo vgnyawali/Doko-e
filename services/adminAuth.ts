@@ -1,6 +1,5 @@
 import { env } from 'cloudflare:workers';
 import { headers } from 'next/headers';
-import { getChatGPTUser } from '@/app/chatgpt-auth';
 
 import { normalizeCredential, parsePasswordHash, verifyPassword } from './adminCredentials';
 
@@ -123,19 +122,5 @@ async function cookieValue(request?: Request) {
 }
 // Authorization is checked on every mutation. Never grant admin to the first visitor.
 export async function isAdmin(request?: Request) {
-  const user = await getChatGPTUser();
-  const ids = (env.ADMIN_USER_IDS || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const emails = (env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  if (
-    user &&
-    (ids.includes(user.userId) || emails.includes(user.email.toLowerCase()))
-  )
-    return true;
   return !!(await sessionUsername(await cookieValue(request)));
 }
