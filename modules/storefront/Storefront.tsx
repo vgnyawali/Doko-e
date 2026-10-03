@@ -21,6 +21,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { ProductDetails } from '@/components/ProductCard';
+import ProductImageZoom from '@/components/ProductImageZoom';
 import QuantitySelector from '@/components/QuantitySelector';
 import ProductCatalog from '@/modules/catalog/ProductCatalog';
 import FeaturedSpecials from '@/modules/specials/FeaturedSpecials';
@@ -283,11 +284,14 @@ export default function Storefront() {
               <SheetDescription>
                 {view.brand} · {view.package_size}
               </SheetDescription>
+              <ProductImageZoom src={view.image_url} name={view.name} className="panel-image-zoom">
               <img
                 className="panel-image"
                 src={view.image_url}
                 alt={view.name}
               />
+              <span>Zoom picture ⤢</span>
+              </ProductImageZoom>
               <p lang="ne">{view.nepali_name}</p>
               <p>{view.description}</p>
               <ProductDetails product={view} />

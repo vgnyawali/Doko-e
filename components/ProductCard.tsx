@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { Product } from '@/models/Product';
 import type { SiteSettings } from '@/models/SiteSettings';
 import QuantitySelector from './QuantitySelector';
+import ProductImageZoom from './ProductImageZoom';
 import FeaturedHover from '@/modules/promotions/FeaturedHover';
 import { canPurchase, shippingLabels } from '@/services/shipping';
 export function ProductDetails({ product: p }: { product: Product }) {
@@ -38,19 +39,20 @@ export default function ProductCard({
     <article className="product-card">
       <div className="product-photo">
         {p.featured && p.hover_popup_enabled && p.hover_popup_image_url ? <FeaturedHover config={p} id={p.id} title={p.name} className="image-button"><img src={p.image_url} alt={p.name} loading="lazy" /><span className="view-hint">View promotion ↗</span></FeaturedHover> : <>
-        <button
+        <ProductImageZoom src={p.image_url} name={p.name}
           className="image-button"
-          onClick={() => onView(p)}
-          aria-label={`View ${p.name} details`}
         >
           <img src={p.image_url} alt={p.name} loading="lazy" />
-          <span className="view-hint">Quick view ↗</span>
-        </button>
+        </ProductImageZoom>
         <div className="hover-details">
           <ProductDetails product={p} />
         </div>
         </>}
         {p.featured && <span className="product-badge">Doko favorite</span>}
+        <div className="product-photo-actions">
+          <ProductImageZoom src={p.image_url} name={p.name} />
+          <button type="button" onClick={() => onView(p)} aria-label={`Quick view ${p.name}`}>Quick view ↗</button>
+        </div>
       </div>
       <div className="product-meta">
         <span>{p.category}</span>
