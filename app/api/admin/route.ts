@@ -36,7 +36,15 @@ export async function POST(request: Request) {
         throw Error('Expected a public CSV sheet under 2 MB.');
       return Response.json({ rows: previewCSV(text) });
     }
-    if (action === 'products') {
+    if (action === 'product_order') {
+      if (typeof data.id !== 'string' || !store.products.some((p) => p.id === data.id))
+        throw Error('Product not found.');
+      if (!Number.isSafeInteger(data.display_order) || data.display_order < 0)
+        throw Error('Order number must be a non-negative whole number.');
+      // Update only ordering, preserving inventory and other concurrent product edits.
+      await database().prepare("UPDATE products SET data = json_set(data, '$.display_order', ?) WHERE id = ?")
+        .bind(data.display_order, data.id).run();
+    } else if (action === 'products') {
       if (
         !Array.isArray(data.products) ||
         !data.products.length ||

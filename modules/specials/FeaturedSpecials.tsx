@@ -34,7 +34,6 @@ export default function FeaturedSpecials({
             <section className="special section" key={s.id} id="specials">
               <FeaturedHover config={s} id={s.id} title={s.headline} className="special-promotion-trigger"><div className="special-image">
                 <img src={s.hero_image || p.image_url} alt={p.name} />
-                <span lang="ne">दशैंको शुभकामना</span>
               </div></FeaturedHover>
               <div className="special-copy">
                 <p className="eyebrow">

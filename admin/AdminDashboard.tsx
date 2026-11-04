@@ -111,7 +111,7 @@ export default function AdminDashboard() {
     );
   const shown = store.products.filter((p) =>
     `${p.name} ${p.id} ${p.sku}`.toLowerCase().includes(search.toLowerCase()),
-  );
+  ).sort((a, b) => a.display_order - b.display_order);
   return (
     <div className="admin-shell">
       <header className="admin-header">
@@ -201,6 +201,7 @@ export default function AdminDashboard() {
                 <TableRow>
                   {[
                     'Product',
+                    'Order number',
                     'Price',
                     'Inventory',
                     'Tax classification',
@@ -225,6 +226,20 @@ export default function AdminDashboard() {
                           </small>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <form key={`${p.id}-${p.display_order}`} className="row-actions" onSubmit={(event) => {
+                        event.preventDefault();
+                        const value = new FormData(event.currentTarget).get('display_order');
+                        void mutate({ action: 'product_order', id: p.id, display_order: Number(value) });
+                      }}>
+                        <input name="display_order" type="number" min="0" step="1" required
+                          defaultValue={p.display_order} disabled={busy}
+                          aria-label={`${p.name} order number`} title="Lower numbers appear first"
+                          style={{ width: 80, padding: 8, border: '1px solid var(--border)', borderRadius: 4 }} />
+                        <button type="submit" disabled={busy}>Save</button>
+                      </form>
+                      <small>Lower numbers first</small>
                     </TableCell>
                     <TableCell>${p.price.toFixed(2)}</TableCell>
                     <TableCell>{p.inventory}</TableCell>
