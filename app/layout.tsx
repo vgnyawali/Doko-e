@@ -1,28 +1,16 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
 export const metadata: Metadata = {
-  title: "Doko Nepali Market",
+  icons: { icon: '/logo.png' },
+  title: 'Doko - घटस्थापना तथा दुर्गा पुजा सामग्री',
   description:
-    "Nepali pantry favorites, collected with care and delivered across Greater Boston.",
-  metadataBase: new URL(
-    "https://boston-nepali-market.vgnyawali756102.chatgpt.site",
-  ),
-  openGraph: {
-    title: "Doko Nepali Market",
-    description: "A little taste of home, delivered.",
-    images: ["/og.png"],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Doko Nepali Market",
-    description: "A little taste of home, delivered.",
-    images: ["/og.png"],
-  },
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+    'Nepali pantry essentials and seasonal favorites. Delivered across the United States.',
 };
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>{children}</body>

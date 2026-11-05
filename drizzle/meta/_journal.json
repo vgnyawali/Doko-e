@@ -5,8 +5,57 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1787536985757,
-      "tag": "0000_opposite_lady_mastermind",
+      "when": 1788751449553,
+      "tag": "0000_equal_preak",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789231495297,
+      "tag": "0001_general_homepage_title",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789530000000,
+      "tag": "0002_checkout_orders",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789660000000,
+      "tag": "0003_product_tax_defaults",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789750000000,
+      "tag": "0004_greater_boston_delivery",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789847141173,
+      "tag": "0005_luxuriant_gertrude_yorkes",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789903184814,
+      "tag": "0006_deep_stellaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793772341976,
+      "tag": "0007_salty_vapor",
       "breakpoints": true
     }
   ]
