@@ -11,6 +11,8 @@ for (const [entry, name] of [
   ['tests/fulfillment.test.ts', 'fulfillment'],
   ['tests/confirmation.test.ts', 'confirmation'],
   ['tests/tax.test.ts', 'tax'],
+  ['tests/collections.test.ts', 'collections'],
+  ['tests/product-display.test.ts', 'product-display'],
   ['modules/checkout/checkout.test.ts', 'checkout'],
   ['tests/domain.test.ts', 'domain'],
 ]) {

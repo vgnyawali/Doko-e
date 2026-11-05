@@ -1,4 +1,11 @@
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
+import {
+  sqliteTable,
+  text,
+  integer,
+  index,
+  uniqueIndex,
+  primaryKey,
+} from 'drizzle-orm/sqlite-core';
 export const flashAds = sqliteTable('flash_ads', {
   id: text('id').primaryKey(),
   data: text('data').notNull(),
@@ -40,3 +47,59 @@ export const siteSettings = sqliteTable('site_settings', {
   id: text('id').primaryKey(),
   data: text('data').notNull(),
 });
+
+export const catalogCollections = sqliteTable(
+  'catalog_collections',
+  {
+    id: text('id').primaryKey(),
+    slug: text('slug').notNull(),
+    status: text('status').notNull().default('draft'),
+    navigationVisible: integer('navigation_visible').notNull().default(0),
+    navigationOrder: integer('navigation_order').notNull().default(0),
+    data: text('data').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [
+    uniqueIndex('catalog_collections_slug_unique').on(table.slug),
+    index('catalog_collections_navigation').on(
+      table.status,
+      table.navigationVisible,
+      table.navigationOrder,
+    ),
+  ],
+);
+
+export const catalogCollectionProducts = sqliteTable(
+  'catalog_collection_products',
+  {
+    collectionId: text('collection_id')
+      .notNull()
+      .references(() => catalogCollections.id, { onDelete: 'cascade' }),
+    productId: text('product_id')
+      .notNull()
+      .references(() => products.id, { onDelete: 'cascade' }),
+    displayOrder: integer('display_order').notNull().default(0),
+    badge: text('badge').notNull().default(''),
+    description: text('description').notNull().default(''),
+  },
+  (table) => [
+    primaryKey({ columns: [table.collectionId, table.productId] }),
+    index('catalog_collection_products_order').on(
+      table.collectionId,
+      table.displayOrder,
+    ),
+  ],
+);
+
+export const catalogCollectionRedirects = sqliteTable(
+  'catalog_collection_redirects',
+  {
+    oldSlug: text('old_slug').primaryKey(),
+    collectionId: text('collection_id')
+      .notNull()
+      .references(() => catalogCollections.id, { onDelete: 'cascade' }),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [index('catalog_collection_redirects_collection').on(table.collectionId)],
+);

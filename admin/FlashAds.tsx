@@ -1,295 +1,160 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import {
-  type FlashAd,
+  flashDisplayModes,
+  homepageSlideTypes,
+  normalizeHomepageSlide,
   validateFlashAd,
-  activeFlashAd,
+  type FlashAd,
+  type FlashDisplayMode,
+  type HomepageSlideType,
 } from '@/models/Promotion';
-import { Field, Toggle } from './Fields';
+import { Choice, Field, Toggle } from './Fields';
 import { PromotionImage } from './PromotionFields';
 import PromotionModal from '@/modules/promotions/PromotionModal';
+import HomepageCarousel from '@/modules/promotions/HomepageCarousel';
 import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
+  Table, TableHeader, TableHead, TableBody, TableRow, TableCell,
 } from '@/components/ui/table';
+
 const localTime = (value: string) => {
   if (!value) return '';
-  const d = new Date(value);
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
+  const date = new Date(value);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString().slice(0, 16);
 };
-export default function FlashAds() {
-  const [ads, setAds] = useState<FlashAd[]>([]),
-    [draft, setDraft] = useState<FlashAd | null>(null),
-    [preview, setPreview] = useState<FlashAd | null>(null);
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState(''),
-    [notice, setNotice] = useState('');
+
+function blankSlide(slideType: HomepageSlideType): FlashAd {
+  const now = Date.now();
+  return {
+    id: crypto.randomUUID(), slide_type: slideType, display_mode: 'slider',
+    badge_text: '', title: '', description: '', image_url: '', click_url: '',
+    cta_text: '', cta_url: '', active: false,
+    start_at: new Date(now).toISOString(),
+    end_at: new Date(now + 30 * 86400000).toISOString(),
+    priority: 0, created_at: '', updated_at: '',
+  };
+}
+
+function statusLabel(slide: FlashAd) {
+  if (!slide.active) return 'Hidden';
+  if (Date.parse(slide.end_at) < Date.now()) return 'Expired';
+  if (Date.parse(slide.start_at) > Date.now()) return 'Scheduled';
+  return 'Published';
+}
+
+export default function HomepageCovers() {
+  const [slides, setSlides] = useState<FlashAd[]>([]);
+  const [draft, setDraft] = useState<FlashAd | null>(null);
+  const [carouselPreview, setCarouselPreview] = useState<FlashAd | null>(null);
+  const [popupPreview, setPopupPreview] = useState<FlashAd | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+
   async function load() {
-    const r = await fetch('/api/admin/flash-ads', { cache: 'no-store' });
-    if (!r.ok) throw Error('Unable to load ads.');
-    setAds(((await r.json()) as { ads: FlashAd[] }).ads);
+    const response = await fetch('/api/admin/flash-ads', { cache: 'no-store' });
+    if (!response.ok) throw Error('Unable to load homepage covers.');
+    const data = (await response.json()) as { ads: FlashAd[] };
+    setSlides(data.ads.map(normalizeHomepageSlide));
   }
-  useEffect(() => {
-    void load().catch((e) => setError(String(e)));
-  }, []);
+  useEffect(() => { void load().catch((cause) => setError(String(cause))); }, []);
+
   async function mutate(body: unknown) {
-    setBusy(true);
-    setError('');
-    setNotice('');
+    setBusy(true); setError(''); setNotice('');
     try {
-      const r = await fetch('/api/admin/flash-ads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch('/api/admin/flash-ads', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      if (!r.ok) throw Error(((await r.json()) as { error: string }).error);
-      await load();
-      setDraft(null);
-      setNotice('Changes saved.');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to save.');
-    } finally {
-      setBusy(false);
-    }
+      if (!response.ok) throw Error(((await response.json()) as { error: string }).error);
+      await load(); setDraft(null); setNotice('Homepage promotion saved.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to save.');
+    } finally { setBusy(false); }
   }
+
+  const normalizedDraft = draft ? normalizeHomepageSlide(draft) : null;
   return (
-    <section className="admin-card">
+    <section className="admin-card homepage-covers-admin">
       <div className="admin-toolbar">
-        <h2>Flash Ads</h2>
-        <button
-          disabled={busy}
-          className="primary-button"
-          onClick={() => {
-            const now = Date.now();
-            setError('');
-            setDraft({
-              id: crypto.randomUUID(),
-              title: '',
-              description: '',
-              image_url: '',
-              click_url: '',
-              cta_text: '',
-              cta_url: '',
-              active: false,
-              start_at: new Date(now).toISOString(),
-              end_at: new Date(now + 86400000).toISOString(),
-              priority: 0,
-              created_at: '',
-              updated_at: '',
-            });
-          }}
-        >
-          Create flash ad
-        </button>
-        <button
-          disabled={busy}
-          onClick={() => void load().catch((e) => setError(String(e)))}
-        >
-          Refresh
-        </button>
+        <div><h2>Homepage Covers &amp; Promotions</h2><p>Manage regular covers and scheduled Flash Ads in one homepage slider.</p></div>
+        <div className="row-actions">
+          <button className="primary-button" disabled={busy} onClick={() => setDraft(blankSlide('cover'))}>+ Regular cover</button>
+          <button className="primary-button" disabled={busy} onClick={() => setDraft(blankSlide('flash'))}>+ Flash Ad</button>
+        </div>
       </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && <p role="status">{notice}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
+      {notice && <p className="success" role="status">{notice}</p>}
       <Table>
-        <TableHeader>
-          <TableRow>
-            {[
-              'Preview',
-              'Title',
-              'Start',
-              'End',
-              'Status',
-              'Priority',
-              'Actions',
-            ].map((h) => (
-              <TableHead key={h}>{h}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
+        <TableHeader><TableRow>
+          {['Preview', 'Title', 'Type', 'Display', 'Schedule', 'Order', 'Status', 'Actions'].map((heading) => <TableHead key={heading}>{heading}</TableHead>)}
+        </TableRow></TableHeader>
         <TableBody>
-          {ads.map((ad) => (
-            <TableRow key={ad.id}>
-              <TableCell>
-                <button
-                  onClick={() => setPreview(ad)}
-                  aria-label={`Preview ${ad.title}`}
-                >
-                  <img
-                    className="flash-thumbnail"
-                    src={ad.image_url}
-                    alt={ad.title}
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                  Preview
-                </button>
-              </TableCell>
-              <TableCell>{ad.title}</TableCell>
-              <TableCell>{new Date(ad.start_at).toLocaleString()}</TableCell>
-              <TableCell>{new Date(ad.end_at).toLocaleString()}</TableCell>
-              <TableCell>
-                {!ad.active
-                  ? 'Inactive / archived'
-                  : activeFlashAd([ad])
-                    ? 'Live'
-                    : Date.parse(ad.end_at) < Date.now()
-                      ? 'Ended'
-                      : 'Scheduled'}
-              </TableCell>
-              <TableCell>{ad.priority}</TableCell>
-              <TableCell>
-                <div className="row-actions">
-                  <button disabled={busy} onClick={() => setDraft(ad)}>
-                    Edit
-                  </button>
-                  <button
-                    disabled={busy}
-                    onClick={() =>
-                      void mutate({
-                        action: 'save',
-                        ad: { ...ad, active: !ad.active },
-                      })
-                    }
-                  >
-                    {ad.active ? 'Deactivate / archive' : 'Activate'}
-                  </button>
-                  <button
-                    disabled={busy}
-                    onClick={() => {
-                      if (window.confirm('Permanently delete this flash ad?'))
-                        void mutate({ action: 'delete', id: ad.id });
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+          {[...slides].sort((a, b) => b.priority - a.priority).map((rawSlide) => {
+            const slide = normalizeHomepageSlide(rawSlide);
+            return <TableRow key={slide.id}>
+              <TableCell><button onClick={() => setCarouselPreview(slide)} aria-label={`Preview ${slide.title || 'cover'}`}><img className="flash-thumbnail" src={slide.image_url} alt="" loading="lazy" />Preview</button></TableCell>
+              <TableCell>{slide.title || 'Untitled cover'}</TableCell>
+              <TableCell>{slide.slide_type === 'flash' ? 'Flash Ad' : 'Regular Cover'}</TableCell>
+              <TableCell>{slide.slide_type === 'flash' ? slide.display_mode : 'Slider'}</TableCell>
+              <TableCell><small>{new Date(slide.start_at).toLocaleString()}<br />to {new Date(slide.end_at).toLocaleString()}</small></TableCell>
+              <TableCell>{slide.priority}</TableCell><TableCell>{statusLabel(slide)}</TableCell>
+              <TableCell><div className="row-actions">
+                <button disabled={busy} onClick={() => setDraft(slide)}>Edit</button>
+                <button disabled={busy} onClick={() => void mutate({ action: 'save', ad: { ...slide, active: !slide.active } })}>{slide.active ? 'Hide' : 'Publish'}</button>
+                <button disabled={busy} onClick={() => { if (window.confirm('Permanently delete this homepage promotion?')) void mutate({ action: 'delete', id: slide.id }); }}>Delete</button>
+              </div></TableCell>
+            </TableRow>;
+          })}
         </TableBody>
       </Table>
-      {!ads.length && (
-        <p>
-          No flash ads yet. Create one when you’re ready to promote an offer.
-        </p>
-      )}
-      {draft && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const errors = validateFlashAd(draft);
-            setError(errors.join(' · '));
-            if (!errors.length) void mutate({ action: 'save', ad: draft });
-          }}
-        >
-          <h3>
-            {ads.some((a) => a.id === draft.id)
-              ? 'Edit flash ad'
-              : 'New flash ad'}
-          </h3>
-          <PromotionImage
-            value={draft.image_url}
-            onChange={(v) => setDraft({ ...draft, image_url: v })}
-          />
-          <div className="form-grid">
-            <Field label="Click Destination (Internal Page / URL)"
-              value={draft.click_url || ''}
-              onChange={(v) => setDraft({ ...draft, click_url: v })} />
-            {(['title', 'description', 'cta_text', 'cta_url'] as const).map(
-              (k) => (
-                <Field
-                  key={k}
-                  label={
-                    k === 'title'
-                      ? 'Headline'
-                      : k === 'cta_url'
-                        ? 'CTA link'
-                        : k
-                  }
-                  type={k === 'description' ? 'textarea' : 'text'}
-                  value={draft[k]}
-                  onChange={(v) => setDraft({ ...draft, [k]: v })}
-                />
-              ),
-            )}
-            {(['start_at', 'end_at'] as const).map((k) => (
-              <Field
-                key={k}
-                label={k === 'start_at' ? 'Start date/time' : 'End date/time'}
-                type="datetime-local"
-                value={localTime(draft[k])}
-                onChange={(v) =>
-                  setDraft({
-                    ...draft,
-                    [k]:
-                      v && Number.isFinite(Date.parse(v))
-                        ? new Date(v).toISOString()
-                        : '',
-                  })
-                }
-              />
-            ))}
-            <Field
-              label="Display priority (higher first)"
-              type="number"
-              value={draft.priority}
-              onChange={(v) => setDraft({ ...draft, priority: Number(v) })}
-            />
-          </div>
-          <p>
-            Click Destination makes the entire card clickable. Use an existing internal path such as /, /products/ghatasthapana-kit, /specials/dashain, or /#featured-products. Leave blank for a nonclickable card. No CTA button is required.
-          </p>
-          <p>
-            Times use your browser’s timezone and are saved as UTC. Equal
-            priorities show the newest ad.
-          </p>
-          <Toggle
-            label="Active"
-            checked={draft.active}
-            onChange={(v) => setDraft({ ...draft, active: v })}
-          />
-          <div className="row-actions">
-            <button className="primary-button" disabled={busy} type="submit">
-              Save flash ad
-            </button>
-            <button type="button" onClick={() => setPreview(draft)}>
-              Preview
-            </button>
-            <button type="button" onClick={() => setDraft(null)}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-      {preview && (
-        <PromotionModal
-          key={preview.id + preview.image_url.slice(-20)}
-          open
-          onOpenChange={(open) => {
-            if (!open) setPreview(null);
-          }}
-          image={preview.image_url}
-          title={preview.title || 'Flash ad preview'}
-          description={preview.description}
-          clickUrl={preview.click_url?.trim()}
-          onCardClick={() => setPreview(null)}
-          ctaText={preview.cta_text}
-          ctaUrl={preview.cta_url}
-          onCta={() => setPreview(null)}
-        />
-      )}
+      {!slides.length && <p>No homepage covers yet. The storefront carousel remains hidden until a slider cover is published.</p>}
+
+      {normalizedDraft && <form className="homepage-cover-editor" onSubmit={(event) => {
+        event.preventDefault(); const errors = validateFlashAd(normalizedDraft);
+        setError(errors.join(' · ')); if (!errors.length) void mutate({ action: 'save', ad: normalizedDraft });
+      }}>
+        <h3>{slides.some((slide) => slide.id === normalizedDraft.id) ? 'Edit homepage promotion' : 'New homepage promotion'}</h3>
+        <div className="form-grid">
+          <Choice label="Slide type" value={normalizedDraft.slide_type}
+            options={homepageSlideTypes.map((value) => ({ value, label: value === 'cover' ? 'Regular Cover' : 'Flash Ad' }))}
+            onChange={(value) => setDraft({ ...normalizedDraft, slide_type: value as HomepageSlideType, display_mode: value === 'cover' ? 'slider' : normalizedDraft.display_mode })} />
+          {normalizedDraft.slide_type === 'flash' && <Choice label="Display mode" value={normalizedDraft.display_mode}
+            options={flashDisplayModes.map((value) => ({ value, label: value[0].toUpperCase() + value.slice(1) }))}
+            onChange={(value) => setDraft({ ...normalizedDraft, display_mode: value as FlashDisplayMode })} />}
+        </div>
+        <PromotionImage value={normalizedDraft.image_url} onChange={(value) => setDraft({ ...normalizedDraft, image_url: value })} />
+        <div className="form-grid">
+          <Field label="Title (optional)" value={normalizedDraft.title} onChange={(value) => setDraft({ ...normalizedDraft, title: value })} />
+          <Field label="Description (optional)" type="textarea" value={normalizedDraft.description} onChange={(value) => setDraft({ ...normalizedDraft, description: value })} />
+          {normalizedDraft.slide_type === 'flash' && <Field label="Badge (optional, e.g. Flash Sale)" value={normalizedDraft.badge_text} onChange={(value) => setDraft({ ...normalizedDraft, badge_text: value })} />}
+          <Field label="CTA label (optional)" value={normalizedDraft.cta_text} onChange={(value) => setDraft({ ...normalizedDraft, cta_text: value })} />
+          <Field label="Destination URL (internal path)" value={normalizedDraft.click_url || ''} onChange={(value) => setDraft({ ...normalizedDraft, click_url: value })} />
+          <Field label="Start date/time" type="datetime-local" value={localTime(normalizedDraft.start_at)} onChange={(value) => setDraft({ ...normalizedDraft, start_at: value && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : '' })} />
+          <Field label="End date/time" type="datetime-local" value={localTime(normalizedDraft.end_at)} onChange={(value) => setDraft({ ...normalizedDraft, end_at: value && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : '' })} />
+          <Field label="Display order (higher first)" type="number" value={normalizedDraft.priority} onChange={(value) => setDraft({ ...normalizedDraft, priority: Number(value) })} />
+        </div>
+        {normalizedDraft.cta_url && <Field label="Existing legacy CTA link" value={normalizedDraft.cta_url} onChange={(value) => setDraft({ ...normalizedDraft, cta_url: value })} />}
+        <p>Dates use this browser’s timezone and are stored as UTC. When no scheduled slider cover is active, the storefront carousel is hidden.</p>
+        <Toggle label="Published" checked={normalizedDraft.active} onChange={(value) => setDraft({ ...normalizedDraft, active: value })} />
+        <div className="row-actions">
+          <button className="primary-button" disabled={busy} type="submit">Save promotion</button>
+          <button type="button" onClick={() => setCarouselPreview({ ...normalizedDraft, active: true, display_mode: 'slider', start_at: new Date(Date.now() - 1000).toISOString(), end_at: new Date(Date.now() + 86400000).toISOString() })}>Preview carousel</button>
+          {normalizedDraft.slide_type === 'flash' && (normalizedDraft.display_mode === 'popup' || normalizedDraft.display_mode === 'both') && <button type="button" onClick={() => setPopupPreview(normalizedDraft)}>Preview popup</button>}
+          <button type="button" onClick={() => setDraft(null)}>Cancel</button>
+        </div>
+      </form>}
+
+      {carouselPreview && <div className="homepage-carousel-preview">
+        <div className="admin-toolbar"><h3>Carousel preview</h3><button onClick={() => setCarouselPreview(null)}>Close preview</button></div>
+        <HomepageCarousel slides={[{ ...carouselPreview, active: true, display_mode: 'slider', start_at: new Date(Date.now() - 1000).toISOString(), end_at: new Date(Date.now() + 86400000).toISOString() }]} preview />
+      </div>}
+      {popupPreview && <PromotionModal open onOpenChange={(open) => { if (!open) setPopupPreview(null); }}
+        image={popupPreview.image_url} title={popupPreview.title || 'Doko promotion'} description={popupPreview.description}
+        clickUrl={popupPreview.click_url} onCardClick={() => setPopupPreview(null)}
+        ctaText={popupPreview.cta_text} ctaUrl={popupPreview.cta_url} onCta={() => setPopupPreview(null)} />}
     </section>
   );
 }

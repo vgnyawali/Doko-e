@@ -1,59 +1,32 @@
 'use client';
-import BrandLogo from '@/components/BrandLogo';
-import ProductRequestForm from '@/components/ProductRequestForm';
 import FlashAdPopup from '@/modules/promotions/FlashAdPopup';
 import { useEffect, useState } from 'react';
-import {
-  ShoppingBasket,
-  Truck,
-  Heart,
-  Package,
-  ArrowUpRight,
-} from 'lucide-react';
 import { seedProducts } from '@/data/products';
-import { seedSpecials } from '@/data/specials';
-import { defaultSettings, heroImage } from '@/config/defaults';
+import { defaultSettings } from '@/config/defaults';
 import type { Product } from '@/models/Product';
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
-import { ProductDetails } from '@/components/ProductCard';
-import ProductImageZoom from '@/components/ProductImageZoom';
-import QuantitySelector from '@/components/QuantitySelector';
 import ProductCatalog from '@/modules/catalog/ProductCatalog';
-import FeaturedSpecials from '@/modules/specials/FeaturedSpecials';
 import CartPanel from '@/modules/cart/CartPanel';
-import { setCartQuantity, type Cart } from '@/modules/cart/cart';
-import { canPurchase, shippingLabels } from '@/services/shipping';
+import StoreHeader from '@/components/StoreHeader';
+import StoreAnnouncement from '@/components/StoreAnnouncement';
+import StoreNavigation from '@/components/StoreNavigation';
+import StoreFooter from '@/components/StoreFooter';
+import ProductQuickView from '@/components/ProductQuickView';
+import { useBasket } from '@/hooks/use-basket';
+import type { PublicCollectionNavigation } from '@/models/CatalogCollection';
+import type { FlashAd } from '@/models/Promotion';
+import HomepageCarousel from '@/modules/promotions/HomepageCarousel';
+import FeaturedCollectionRow from '@/components/FeaturedCollectionRow';
+import type { HomepageCollectionFeature } from '@/models/CatalogCollection';
 export default function Storefront() {
   const [products, setProducts] = useState(seedProducts);
   const [settings, setSettings] = useState(defaultSettings);
-  const [specials, setSpecials] = useState(seedSpecials);
-  const [cart, setCart] = useState<Cart>({});
-  const [basket, setBasket] = useState(false);
+  const [collections, setCollections] = useState<PublicCollectionNavigation[]>([]);
+  const [homepageSlides, setHomepageSlides] = useState<FlashAd[]>([]);
+  const [collectionFeatures, setCollectionFeatures] = useState<HomepageCollectionFeature[]>([]);
+  const [basketOpen, setBasketOpen] = useState(false);
   const [view, setView] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState('');
-  useEffect(() => {
-    const syncBasket = () => {
-      try {
-        const saved = JSON.parse(localStorage.getItem('doko-basket') || '{}');
-        if (saved && typeof saved === 'object' && !Array.isArray(saved)) setCart(saved);
-      } catch {}
-    };
-    const onStorage = (event: StorageEvent) => { if (event.key === 'doko-basket' || event.key === null) syncBasket(); };
-    window.addEventListener('storage', onStorage);
-    window.addEventListener('pageshow', syncBasket);
-    window.addEventListener('focus', syncBasket);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('pageshow', syncBasket);
-      window.removeEventListener('focus', syncBasket);
-    };
-  }, []);
+  const basket = useBasket(products, settings);
   useEffect(() => {
     fetch('/api/store')
       .then((r) => {
@@ -61,24 +34,30 @@ export default function Storefront() {
         return r.json() as Promise<{
           products: Product[];
           settings: typeof defaultSettings;
-          specials: typeof seedSpecials;
+          collections: PublicCollectionNavigation[];
+          collectionFeatures: HomepageCollectionFeature[];
         }>;
       })
       .then((d) => {
         setProducts(d.products);
         setSettings(d.settings);
-        setSpecials(d.specials);
+        setCollections(d.collections || []);
+        setCollectionFeatures(d.collectionFeatures || []);
       })
       .catch(() =>
         setNotice(
           'The live catalog is temporarily unavailable. Showing the sample collection.',
         ),
       );
-    try {
-      const saved = JSON.parse(localStorage.getItem('doko-basket') || '{}');
-      if (saved && typeof saved === 'object' && !Array.isArray(saved))
-        setCart(saved);
-    } catch {}
+  }, []);
+  useEffect(() => {
+    document.title = settings.browser_title;
+  }, [settings.browser_title]);
+  useEffect(() => {
+    fetch('/api/promotions', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() as Promise<{ slides: FlashAd[] }> : { slides: [] })
+      .then((data) => setHomepageSlides(data.slides || []))
+      .catch(() => setHomepageSlides([]));
   }, []);
   useEffect(() => {
     if (notice) {
@@ -86,100 +65,29 @@ export default function Storefront() {
       return () => clearTimeout(t);
     }
   }, [notice]);
-  function updateCart(next: Cart) {
-    setCart(next);
-    localStorage.setItem('doko-basket', JSON.stringify(next));
-  }
-  const validProducts = products.filter((p) => canPurchase(p, settings));
-  const validCart = Object.fromEntries(
-    Object.entries(cart).flatMap(([id, n]) => {
-      const p = validProducts.find((p) => p.id === id);
-      return p && Number.isFinite(n) && n > 0
-        ? [[id, Math.min(p.inventory, Math.trunc(n))]]
-        : [];
-    }),
-  );
   function add(p: Product, n: number) {
-    if (!canPurchase(p, settings)) return;
-    updateCart(
-      setCartQuantity(validCart, p.id, (validCart[p.id] || 0) + n, p.inventory),
-    );
-    setNotice(`${p.name} added to your basket.`);
+    if (basket.add(p, n)) setNotice(`${p.name} added to your basket.`);
   }
-  const count = Object.values(validCart).reduce((a, b) => a + b, 0);
   const openView = (p: Product) => {
     setView(p);
-    setQuantity(1);
   };
   return (
     <>
       <FlashAdPopup />
-      <div className="announcement">
-        <span>नमस्ते, welcome to Doko</span>
-        <span>{settings.announcement}</span>
-        <Truck size={16} />
-      </div>
-      <header className="site-header">
-        <BrandLogo name={settings.site_name} />
-        <ProductRequestForm />
-        <button className="basket-button" onClick={() => setBasket(true)}>
-          <ShoppingBasket size={19} />
-          <span>Basket</span>
-          <b>{count}</b>
-        </button>
-      </header>
+      <StoreHeader
+        settings={settings}
+        basketCount={basket.count}
+        onBasket={() => setBasketOpen(true)}
+      />
+      <StoreAnnouncement announcement={settings.announcement} />
+      <StoreNavigation collections={collections} />
       <main>
-        <section className="hero">
-          <div className="hero-copy">
-            <p className="eyebrow">Rooted in Nepal. At home in America.</p>
-            <h1>
-              {settings.hero_title === defaultSettings.hero_title ? (
-                <>
-                  A little bit of Nepal,
-                  <br />
-                  wherever <em>you are</em>
-                </>
-              ) : (
-                settings.hero_title
-              )}
-            </h1>
-            <p className="hero-description">{settings.hero_subtitle}</p>
-            <a className="primary-button" href="#shop">
-              Fill your basket <ArrowUpRight size={19} />
-            </a>
-            <p className="hero-foot">
-              <Truck size={17} />
-              {settings.shipping_message}
-            </p>
-          </div>
-          <div className="hero-image">
-            <img
-              src={heroImage}
-              alt="A colorful spread of spices, ginger and chilies"
-            />
-            <div className="hero-stamp">
-              From our pantry
-              <br />
-              <em>to yours.</em>
-            </div>
-          </div>
-        </section>
-        <div className="trust-strip">
-          <span>
-            <Heart size={17} /> Familiar items, thoughtfully selected
-          </span>
-          <span>
-            <Truck size={18} /> Shipping across the U.S.
-          </span>
-          <span>
-            <Package size={18} /> Free shipping over $
-            {settings.free_shipping_threshold}
-          </span>
-        </div>
-        <FeaturedSpecials
-          specials={specials}
-          products={products}
-          enabled={settings.special_enabled}
+        <HomepageCarousel slides={homepageSlides} />
+        <FeaturedCollectionRow
+          features={collectionFeatures}
+          carouselThreshold={settings.featured_items_carousel_threshold}
+          settings={settings}
+          onAdd={add}
           onView={openView}
         />
         <ProductCatalog
@@ -188,41 +96,6 @@ export default function Storefront() {
           onAdd={add}
           onView={openView}
         />
-        <section id="how" className="how-section">
-          <div className="section">
-            <p className="eyebrow">How Doko works</p>
-            <h2>
-              From our community
-              <br />
-              to your home.
-            </h2>
-            <div className="steps">
-              {[
-                [
-                  '01',
-                  'Find your favorites',
-                  'Browse familiar staples, new discoveries, and seasonal treats.',
-                ],
-                [
-                  '02',
-                  'Make it your basket',
-                  'Choose your quantities. We carefully pack every little taste of home.',
-                ],
-                [
-                  '03',
-                  'We bring home closer',
-                  'Your Nepali favorites, shipped to your doorstep across the U.S.',
-                ],
-              ].map(([n, t, d]) => (
-                <article key={n}>
-                  <span>{n}</span>
-                  <h3>{t}</h3>
-                  <p>{d}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
         <section id="why" className="section why-section">
           <div>
             <p className="eyebrow">Why Doko</p>
@@ -247,82 +120,25 @@ export default function Storefront() {
           </div>
         </section>
       </main>
-      <footer>
-        <div className="footer-main">
-          <BrandLogo name={settings.site_name} />
-          <p>Closer to culture. Closer to home.</p>
-          <div>
-            <a href="#shop">Shop</a>
-            <a href="#how">How it works</a>
-            {settings.support_email && (
-              <a href={`mailto:${settings.support_email}`}>Contact us</a>
-            )}
-            <a href="/admin">Store admin ↗</a>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <span>
-            © {new Date().getFullYear()} {settings.site_name}. Made for our
-            community.
-          </span>
-          <span>Nepali roots. Nationwide reach.</span>
-        </div>
-      </footer>
+      <StoreFooter settings={settings} collections={collections} />
       <div className="toast" role="status" hidden={!notice}>
         {notice}
       </div>
-      <Sheet
-        open={!!view}
-        onOpenChange={(o) => {
-          if (!o) setView(null);
-        }}
-      >
-        <SheetContent className="doko-panel">
-          {view && (
-            <>
-              <SheetTitle>{view.name}</SheetTitle>
-              <SheetDescription>
-                {view.brand} · {view.package_size}
-              </SheetDescription>
-              <ProductImageZoom src={view.image_url} name={view.name} className="panel-image-zoom">
-              <img
-                className="panel-image"
-                src={view.image_url}
-                alt={view.name}
-              />
-              <span>Zoom picture ⤢</span>
-              </ProductImageZoom>
-              <p lang="ne">{view.nepali_name}</p>
-              <p>{view.description}</p>
-              <ProductDetails product={view} />
-              <p>{shippingLabels[view.shipping_type]}</p>
-              <div className="price-row">
-                <strong>${view.price.toFixed(2)}</strong>
-                <QuantitySelector
-                  value={quantity}
-                  onChange={setQuantity}
-                  max={Math.max(1, view.inventory)}
-                />
-              </div>
-              <button
-                className="primary-button"
-                disabled={!canPurchase(view, settings)}
-                onClick={() => add(view, quantity)}
-              >
-                Add to Basket
-              </button>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+      <ProductQuickView
+        key={view?.id || 'closed'}
+        product={view}
+        settings={settings}
+        onClose={() => setView(null)}
+        onAdd={add}
+      />
       <CartPanel
-        open={basket}
-        onOpenChange={setBasket}
-        cart={validCart}
+        open={basketOpen}
+        onOpenChange={setBasketOpen}
+        cart={basket.cart}
         products={products}
         threshold={settings.free_shipping_threshold}
         settings={settings}
-        onChange={updateCart}
+        onChange={basket.update}
       />
     </>
   );

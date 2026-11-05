@@ -96,6 +96,19 @@ test('shipping policies and unavailable items are enforced', () => {
 });
 test('settings and specials reject invalid configuration', () => {
   assert.deepEqual(validateSettings(defaultSettings), []);
+  assert.ok(
+    validateSettings({ ...defaultSettings, browser_title: '' }).includes(
+      'browser_title is required',
+    ),
+  );
+  assert.ok(
+    validateSettings({ ...defaultSettings, browser_title: 'x'.repeat(121) })
+      .includes('Browser title must be 120 characters or fewer'),
+  );
+  assert.ok(
+    validateSettings({ ...defaultSettings, featured_items_carousel_threshold: 0 })
+      .includes('Featured carousel threshold must be a whole number from 1 to 12'),
+  );
   assert.deepEqual(validateSpecial(seedSpecials[0], seedProducts), []);
   assert.ok(
     validateSpecial(

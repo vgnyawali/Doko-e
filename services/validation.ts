@@ -12,16 +12,25 @@ export function validateSettings(s: SiteSettings) {
     e.push('Delivery instructions must be text under 2000 characters');
   for (const k of [
     'site_name',
+    'browser_title',
     'hero_title',
     'hero_subtitle',
     'shipping_message',
   ] as const)
     if (typeof s[k] !== 'string' || !s[k].trim()) e.push(`${k} is required`);
+  if (typeof s.browser_title === 'string' && s.browser_title.length > 120)
+    e.push('Browser title must be 120 characters or fewer');
   if (
     !Number.isFinite(s.free_shipping_threshold) ||
     s.free_shipping_threshold < 0
   )
     e.push('Free shipping threshold must be non-negative');
+  if (
+    !Number.isSafeInteger(s.featured_items_carousel_threshold) ||
+    s.featured_items_carousel_threshold < 1 ||
+    s.featured_items_carousel_threshold > 12
+  )
+    e.push('Featured carousel threshold must be a whole number from 1 to 12');
   if (s.support_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.support_email))
     e.push('Invalid support email');
   if (typeof s.special_enabled !== 'boolean')

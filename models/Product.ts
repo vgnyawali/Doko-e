@@ -56,6 +56,28 @@ export const emptyProduct: Product = {
   display_order: 0,
   shipping_type: 'nationwide',
 };
+
+const foodCategories = new Set([
+  'pantry',
+  'spices',
+  'drinks',
+  'beverages',
+  'food',
+  'grocery',
+  'snacks',
+  'seasonal',
+]);
+
+export function isFoodProduct(product: Pick<Product, 'category'>) {
+  return foodCategories.has(product.category.trim().toLowerCase());
+}
+
+export function hasRelevantAllergenInformation(
+  product: Pick<Product, 'allergens'>,
+) {
+  const value = product.allergens.trim();
+  return Boolean(value) && !/^(none|n\/a|not applicable|not provided)$/i.test(value);
+}
 export function validateProduct(p: Product): string[] {
   const errors: string[] = validateHover(p);
   for (const field of [

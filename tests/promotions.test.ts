@@ -4,6 +4,9 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import {
   activeFlashAd,
+  activeHomepageSlides,
+  homepageSliderRecords,
+  normalizeHomepageSlide,
   validateFlashAd,
   validateHover,
   validPromoImage,
@@ -53,6 +56,47 @@ test('flash visibility is inclusive, inactive ads stay hidden, priority and newe
     )?.id,
     'two',
   );
+});
+test('homepage slider combines covers and opted-in flash ads without duplicates', () => {
+  const now = Date.parse(ad.start_at);
+  const cover: FlashAd = {
+    ...ad,
+    id: 'cover',
+    slide_type: 'cover',
+    display_mode: 'slider',
+    title: '',
+    priority: 5,
+  };
+  const sliderFlash: FlashAd = {
+    ...ad,
+    id: 'slider-flash',
+    slide_type: 'flash',
+    display_mode: 'slider',
+    priority: 3,
+  };
+  const both: FlashAd = {
+    ...ad,
+    id: 'both',
+    slide_type: 'flash',
+    display_mode: 'both',
+    priority: 1,
+  };
+  assert.deepEqual(
+    activeHomepageSlides([both, sliderFlash, cover, cover], now).map((slide) => slide.id),
+    ['cover', 'slider-flash', 'both'],
+  );
+  assert.equal(activeFlashAd([sliderFlash], now), null);
+  assert.equal(activeFlashAd([both], now)?.id, 'both');
+  assert.deepEqual(homepageSliderRecords([{ ...cover, active: false }]), []);
+});
+test('legacy flash records remain popup-only and slider schedules expire automatically', () => {
+  const legacy = normalizeHomepageSlide(ad);
+  assert.equal(legacy.slide_type, 'flash');
+  assert.equal(legacy.display_mode, 'popup');
+  assert.deepEqual(activeHomepageSlides([ad], Date.parse(ad.start_at)), []);
+  const slider = { ...ad, slide_type: 'flash' as const, display_mode: 'slider' as const };
+  assert.equal(activeHomepageSlides([slider], Date.parse(ad.start_at))[0]?.id, 'one');
+  assert.deepEqual(activeHomepageSlides([slider], Date.parse(ad.end_at) + 1), []);
 });
 test('promotion links and images reject executable protocols and unsupported or oversized uploads', () => {
   for (const link of [

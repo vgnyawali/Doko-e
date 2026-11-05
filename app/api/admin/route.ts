@@ -4,11 +4,19 @@ import { validateProduct, type Product } from '@/models/Product';
 import { previewCSV, sheetCSVUrl } from '@/services/sheets';
 import { validateSettings, validateSpecial } from '@/services/validation';
 import { normalizeProduct, validateProductTax } from '@/services/taxService';
+import { readAdminCollections } from '@/services/collections';
 export const dynamic = 'force-dynamic';
+async function readAdminStore() {
+  const [store, collections] = await Promise.all([
+    readStore(),
+    readAdminCollections(),
+  ]);
+  return { ...store, collections };
+}
 export async function GET(request: Request) {
   if (!(await isAdmin(request)))
     return Response.json({ error: 'Admin access required' }, { status: 403 });
-  return Response.json(await readStore(), {
+  return Response.json(await readAdminStore(), {
     headers: { 'Cache-Control': 'no-store' },
   });
 }
@@ -134,7 +142,7 @@ export async function POST(request: Request) {
         .bind(JSON.stringify(data.settings), 'main')
         .run();
     } else throw Error('Unknown action.');
-    return Response.json(await readStore());
+    return Response.json(await readAdminStore());
   } catch (e) {
     return Response.json(
       { error: e instanceof Error ? e.message : 'Unable to save changes.' },

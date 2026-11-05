@@ -50,6 +50,13 @@
       "when": 1789903184814,
       "tag": "0006_deep_stellaris",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1793772341976,
+      "tag": "0007_salty_vapor",
+      "breakpoints": true
     }
   ]
 }

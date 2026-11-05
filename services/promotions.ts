@@ -1,5 +1,7 @@
 import {
   activeFlashAd,
+  homepageSliderRecords,
+  normalizeHomepageSlide,
   validateFlashAd,
   type FlashAd,
 } from '@/models/Promotion';
@@ -7,10 +9,15 @@ export async function readFlashAds(db: D1Database) {
   const result = await db
     .prepare('SELECT data FROM flash_ads')
     .all<{ data: string }>();
-  return result.results.map((r) => JSON.parse(r.data) as FlashAd);
+  return result.results.map((r) =>
+    normalizeHomepageSlide(JSON.parse(r.data) as FlashAd),
+  );
 }
 export async function readActiveFlashAd(db: D1Database) {
   return activeFlashAd(await readFlashAds(db));
+}
+export async function readHomepageSliderRecords(db: D1Database) {
+  return homepageSliderRecords(await readFlashAds(db));
 }
 export async function saveFlashAd(db: D1Database, value: FlashAd) {
   const errors = validateFlashAd(value);
@@ -21,8 +28,12 @@ export async function saveFlashAd(db: D1Database, value: FlashAd) {
     .first<{ data: string }>();
   const now = new Date().toISOString();
   // Server owns timestamps; whitelist fields instead of storing arbitrary JSON.
+  const normalized = normalizeHomepageSlide(value);
   const ad: FlashAd = {
     id: value.id,
+    slide_type: normalized.slide_type,
+    display_mode: normalized.display_mode,
+    badge_text: normalized.badge_text.trim(),
     title: value.title.trim(),
     description: value.description.trim(),
     image_url: value.image_url,

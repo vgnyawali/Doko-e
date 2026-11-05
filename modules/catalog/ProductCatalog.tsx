@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Product } from '@/models/Product';
 import type { SiteSettings } from '@/models/SiteSettings';
 import ProductCard from '@/components/ProductCard';
@@ -15,12 +15,17 @@ export default function ProductCatalog({
   onView: (p: Product) => void;
 }) {
   const [category, setCategory] = useState('All');
+  const [search, setSearch] = useState('');
+  useEffect(() => {
+    setSearch(new URLSearchParams(window.location.search).get('search')?.trim().toLowerCase() || '');
+  }, []);
   const active = products
     .filter((p) => p.active)
     .sort((a, b) => a.display_order - b.display_order);
   const categories = ['All', ...new Set(active.map((p) => p.category))];
-  const shown = active.filter(
-    (p) => category === 'All' || p.category === category,
+  const shown = active.filter((p) =>
+    (category === 'All' || p.category === category) &&
+    (!search || `${p.name} ${p.category} ${p.brand}`.toLowerCase().includes(search)),
   );
   return (
     <section id="shop" className="section catalog">

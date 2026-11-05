@@ -1,11 +1,13 @@
 import type { SiteSettings } from '@/models/SiteSettings';
 export const defaultSettings: SiteSettings = {
   site_name: 'Doko',
+  browser_title: 'Doko - घटस्थापना तथा दुर्गा पुजा सामग्री',
   hero_title: 'A little bit of Nepal, wherever you are',
   hero_subtitle:
     'The Nepali essentials you grew up with. Thoughtfully selected, carefully packed, and brought to your door — anywhere in the U.S.',
   shipping_message: 'Nepali favorites. Delivered across the U.S.',
   free_shipping_threshold: 75,
+  featured_items_carousel_threshold: 4,
   delivery_instructions:
     'Delivery is available in the Greater Boston area only. Enter your delivery address at checkout. Contact order@doko-e.com with delivery questions.',
   support_email: '',

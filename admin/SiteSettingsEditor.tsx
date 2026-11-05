@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import type { SiteSettings } from '@/models/SiteSettings';
-import { Field, Toggle } from './Fields';
+import { Field } from './Fields';
 import ShippingSettings from './ShippingSettings';
 import { validateSettings } from '@/services/validation';
 export default function SiteSettingsEditor({
@@ -30,6 +30,7 @@ export default function SiteSettingsEditor({
           {(
             [
               'site_name',
+              'browser_title',
               'hero_title',
               'hero_subtitle',
               'support_email',
@@ -43,12 +44,18 @@ export default function SiteSettingsEditor({
               onChange={(v) => setDraft({ ...draft, [k]: v })}
             />
           ))}
+          <Field
+            label="Featured items before carousel"
+            type="number"
+            value={String(draft.featured_items_carousel_threshold)}
+            onChange={(value) =>
+              setDraft({
+                ...draft,
+                featured_items_carousel_threshold: Number(value),
+              })
+            }
+          />
         </div>
-        <Toggle
-          label="Show seasonal specials"
-          checked={draft.special_enabled}
-          onChange={(v) => setDraft({ ...draft, special_enabled: v })}
-        />
       </section>
       <ShippingSettings settings={draft} onChange={setDraft} />
       {error && (

@@ -25,21 +25,21 @@ import {
   AlertDialogFooter,
 } from '@/components/ui/alert-dialog';
 import { emptyProduct, type Product } from '@/models/Product';
-import type { FeaturedSpecial } from '@/models/FeaturedSpecial';
 import type { SiteSettings } from '@/models/SiteSettings';
 import ProductEditor from './ProductEditor';
 import SheetsImport from './SheetsImport';
-import SpecialsEditor from './SpecialsEditor';
 import SiteSettingsEditor from './SiteSettingsEditor';
 import OrdersView from './OrdersView';
 import ProductRequests from './ProductRequests';
-import FlashAds from './FlashAds';
+import HomepageCovers from './FlashAds';
 import ShippingSettings from './ShippingSettings';
 import { taxClasses } from '@/config/tax';
+import type { AdminCatalogCollection } from '@/models/CatalogCollection';
+import CollectionsManager from './CollectionsManager';
 type Store = {
   products: Product[];
-  specials: FeaturedSpecial[];
   settings: SiteSettings;
+  collections: AdminCatalogCollection[];
 };
 export default function AdminDashboard() {
   const [store, setStore] = useState<Store | null>(null);
@@ -87,12 +87,19 @@ export default function AdminDashboard() {
   useEffect(() => {
     void reload();
   }, []);
+  useEffect(() => {
+    if (store?.settings.browser_title?.trim())
+      document.title = store.settings.browser_title;
+  }, [store?.settings.browser_title]);
   async function mutate(data: unknown) {
     setBusy(true);
     setError('');
     setNotice('');
     try {
-      setStore(await request(data));
+      const updated = await request(data);
+      setStore(updated);
+      if (updated.settings.browser_title.trim())
+        document.title = updated.settings.browser_title;
       setEditor(null);
       setNotice('Changes saved.');
     } catch (e) {
@@ -151,10 +158,6 @@ export default function AdminDashboard() {
           </strong>
           <span>Out of stock</span>
         </div>
-        <div>
-          <strong>{store.specials.length}</strong>
-          <span>Seasonal specials</span>
-        </div>
       </div>
       {error && (
         <p className="error" role="alert">
@@ -170,8 +173,8 @@ export default function AdminDashboard() {
         <TabsList className="admin-tabs">
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="import">Google Sheets import</TabsTrigger>
-          <TabsTrigger value="specials">Featured Products</TabsTrigger>
-          <TabsTrigger value="flash-ads">Flash Ads</TabsTrigger>
+          <TabsTrigger value="collections">Menus &amp; Collections</TabsTrigger>
+          <TabsTrigger value="flash-ads">Homepage Covers &amp; Promotions</TabsTrigger>
           <TabsTrigger value="delivery">Delivery Areas</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="requests">Product Requests{newRequests !== null ? ` (${newRequests})` : ''}</TabsTrigger>
@@ -206,7 +209,6 @@ export default function AdminDashboard() {
                     'Inventory',
                     'Tax classification',
                     'Status',
-                    'Featured',
                     'Actions',
                   ].map((t) => (
                     <TableHead key={t}>{t}</TableHead>
@@ -263,20 +265,6 @@ export default function AdminDashboard() {
                       </button>
                     </TableCell>
                     <TableCell>
-                      <button
-                        disabled={busy}
-                        aria-label={`${p.featured ? 'Unfeature' : 'Feature'} ${p.name}`}
-                        onClick={() =>
-                          mutate({
-                            action: 'products',
-                            products: [{ ...p, featured: !p.featured }],
-                          })
-                        }
-                      >
-                        {p.featured ? '★ Featured' : '☆ Feature'}
-                      </button>
-                    </TableCell>
-                    <TableCell>
                       <div className="row-actions">
                         <button
                           onClick={() => {
@@ -327,15 +315,11 @@ export default function AdminDashboard() {
             }}
           />
         </TabsContent>
-        <TabsContent value="specials">
-          <SpecialsEditor
-            specials={store.specials}
+        <TabsContent value="collections">
+          <CollectionsManager
+            collections={store.collections}
             products={store.products}
-            busy={busy}
-            onSave={(special, product) =>
-              mutate({ action: 'special', special, product })
-            }
-            onDelete={(id) => setDeletion({ action: 'deleteSpecial', id })}
+            onChange={(collections) => setStore({ ...store, collections })}
           />
         </TabsContent>
         <TabsContent value="settings">
@@ -349,7 +333,7 @@ export default function AdminDashboard() {
           <OrdersView />
         </TabsContent>
         <TabsContent value="requests"><ProductRequests onCount={setNewRequests} /></TabsContent>
-        <TabsContent value="flash-ads"><FlashAds /></TabsContent>
+        <TabsContent value="flash-ads"><HomepageCovers /></TabsContent>
         <TabsContent value="delivery"><ShippingSettings settings={deliveryDraft || store.settings} onChange={setDeliveryDraft} /><button className="primary-button" disabled={busy || !deliveryDraft} onClick={() => void mutate({action:'settings',settings:deliveryDraft}).then(() => setDeliveryDraft(null))}>Save delivery settings</button></TabsContent>
       </Tabs>
       <Sheet

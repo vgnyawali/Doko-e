@@ -6,8 +6,15 @@ export interface PromotionalHover {
   hover_popup_cta_text?: string;
   hover_popup_cta_url?: string;
 }
+export const homepageSlideTypes = ['cover', 'flash'] as const;
+export type HomepageSlideType = (typeof homepageSlideTypes)[number];
+export const flashDisplayModes = ['slider', 'popup', 'both'] as const;
+export type FlashDisplayMode = (typeof flashDisplayModes)[number];
 export interface FlashAd {
   id: string;
+  slide_type?: HomepageSlideType;
+  display_mode?: FlashDisplayMode;
+  badge_text?: string;
   title: string;
   description: string;
   image_url: string;
@@ -20,6 +27,32 @@ export interface FlashAd {
   priority: number;
   created_at: string;
   updated_at: string;
+}
+export type HomepageSlide = FlashAd & {
+  slide_type: HomepageSlideType;
+  display_mode: FlashDisplayMode;
+  badge_text: string;
+};
+
+export function normalizeHomepageSlide(value: FlashAd): HomepageSlide {
+  const slideType = homepageSlideTypes.includes(
+    value.slide_type as HomepageSlideType,
+  )
+    ? (value.slide_type as HomepageSlideType)
+    : 'flash';
+  const displayMode =
+    slideType === 'cover'
+      ? 'slider'
+      : flashDisplayModes.includes(value.display_mode as FlashDisplayMode)
+        ? (value.display_mode as FlashDisplayMode)
+        : 'popup';
+  return {
+    ...value,
+    slide_type: slideType,
+    display_mode: displayMode,
+    badge_text: typeof value.badge_text === 'string' ? value.badge_text : '',
+    click_url: typeof value.click_url === 'string' ? value.click_url : '',
+  };
 }
 // Root-relative destinations only; reject encoded slashes/control characters too.
 export function safeFlashDestination(value: string) {
@@ -86,9 +119,25 @@ export function validateFlashAd(a: FlashAd) {
     if (
       typeof a[key] !== 'string' ||
       a[key].length > max ||
-      (['id', 'title'].includes(key) && !a[key].trim())
+      (key === 'id' && !a[key].trim())
     )
       errors.push(`Invalid ${key}`);
+  if (
+    a.slide_type !== undefined &&
+    !homepageSlideTypes.includes(a.slide_type)
+  )
+    errors.push('Choose a valid slide type');
+  if (
+    a.display_mode !== undefined &&
+    !flashDisplayModes.includes(a.display_mode)
+  )
+    errors.push('Choose a valid display mode');
+  const slide = normalizeHomepageSlide(a);
+  if (
+    typeof slide.badge_text !== 'string' ||
+    slide.badge_text.length > 80
+  )
+    errors.push('Invalid badge text');
   if (!validPromoImage(a.image_url))
     errors.push('A valid HTTPS image or supported upload is required');
   if (
@@ -113,8 +162,11 @@ export function validateFlashAd(a: FlashAd) {
 export function activeFlashAd(ads: FlashAd[], now = Date.now()) {
   return (
     ads
+      .map(normalizeHomepageSlide)
       .filter(
         (a) =>
+          a.slide_type === 'flash' &&
+          (a.display_mode === 'popup' || a.display_mode === 'both') &&
           a.active &&
           Date.parse(a.start_at) <= now &&
           now <= Date.parse(a.end_at),
@@ -126,4 +178,36 @@ export function activeFlashAd(ads: FlashAd[], now = Date.now()) {
           a.id.localeCompare(b.id),
       )[0] || null
   );
+}
+
+export function homepageSliderRecords(ads: FlashAd[]) {
+  const unique = new Map<string, HomepageSlide>();
+  for (const value of ads) {
+    const slide = normalizeHomepageSlide(value);
+    if (
+      slide.active &&
+      (slide.display_mode === 'slider' || slide.display_mode === 'both')
+    )
+      unique.set(slide.id, slide);
+  }
+  return [...unique.values()];
+}
+
+export function activeHomepageSlides(ads: FlashAd[], now = Date.now()) {
+  return homepageSliderRecords(ads)
+    .filter(
+      (slide) =>
+        Date.parse(slide.start_at) <= now && now <= Date.parse(slide.end_at),
+    )
+    .sort(
+      (a, b) =>
+        b.priority - a.priority ||
+        Date.parse(b.created_at) - Date.parse(a.created_at) ||
+        a.id.localeCompare(b.id),
+    );
+}
+
+export function homepageSlideDestination(slide: FlashAd) {
+  const destination = slide.click_url?.trim() || slide.cta_url.trim();
+  return destination && safePromoLink(destination) ? destination : '';
 }
