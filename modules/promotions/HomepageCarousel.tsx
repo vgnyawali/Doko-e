@@ -3,9 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { defaultSettings } from '@/config/defaults';
+import type { SiteSettings } from '@/models/SiteSettings';
+import DefaultHomepageCover from './DefaultHomepageCover';
 import {
   activeHomepageSlides,
   homepageSlideDestination,
+  homepageRotation,
   type FlashAd,
   type HomepageSlide,
 } from '@/models/Promotion';
@@ -60,9 +64,11 @@ function PromotionalCover({
 
 export default function HomepageCarousel({
   slides,
+  settings = defaultSettings,
   preview = false,
 }: {
   slides: FlashAd[];
+  settings?: SiteSettings;
   preview?: boolean;
 }) {
   const [now, setNow] = useState(() => Date.now());
@@ -74,9 +80,10 @@ export default function HomepageCarousel({
     () => activeHomepageSlides(slides, now).filter((slide) => !failed.includes(slide.id)),
     [failed, now, slides],
   );
-  const slideCount = active.length;
+  const rotation = homepageRotation(active, settings.include_original_homepage_cover);
+  const slideCount = rotation.length;
   const currentIndex = slideCount ? index % slideCount : 0;
-  const current = active[currentIndex];
+  const current = rotation[currentIndex];
 
   useEffect(() => {
     if (preview) return;
@@ -97,7 +104,6 @@ export default function HomepageCarousel({
     setIndex((value) => (value + direction + slideCount) % slideCount);
   }
 
-  if (!current) return null;
   return (
     <section
       className="homepage-carousel"
@@ -116,11 +122,11 @@ export default function HomepageCarousel({
       }}
     >
       <div aria-live="polite" aria-atomic="true">
-        <PromotionalCover
+        {current ? <PromotionalCover
           key={current.id}
           slide={current}
           onImageError={() => setFailed((ids) => [...new Set([...ids, current.id])])}
-        />
+        /> : <DefaultHomepageCover settings={settings} />}
       </div>
       {slideCount > 1 && (
         <>
@@ -143,7 +149,7 @@ export default function HomepageCarousel({
           <div className="homepage-carousel-dots" aria-label="Choose homepage slide">
             {Array.from({ length: slideCount }, (_, slideIndex) => (
               <button
-                key={active[slideIndex].id}
+                key={rotation[slideIndex]?.id || 'original-cover'}
                 type="button"
                 aria-label={`Show slide ${slideIndex + 1}`}
                 aria-current={slideIndex === currentIndex ? 'true' : undefined}

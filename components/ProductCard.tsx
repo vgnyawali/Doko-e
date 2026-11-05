@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { Product } from '@/models/Product';
 import type { SiteSettings } from '@/models/SiteSettings';
 import QuantitySelector from './QuantitySelector';
+import FeaturedHover from '@/modules/promotions/FeaturedHover';
 import { canPurchase, shippingLabels } from '@/services/shipping';
 export default function ProductCard({
   product: p,
@@ -19,14 +20,18 @@ export default function ProductCard({
   return (
     <article className="product-card">
       <div className="product-photo">
-        <button
+        {p.featured && p.hover_popup_enabled && p.hover_popup_image_url ? (
+          <FeaturedHover config={p} id={p.id} title={p.name} className="product-image-button">
+            <img src={p.image_url} alt={p.name} loading="lazy" />
+          </FeaturedHover>
+        ) : <button
           type="button"
           className="product-image-button"
           onClick={() => onView(p)}
           aria-label={`Quick view ${p.name}`}
         >
           <img src={p.image_url} alt={p.name} loading="lazy" />
-        </button>
+        </button>}
       </div>
       <button className="product-title" onClick={() => onView(p)}>
         {p.name}

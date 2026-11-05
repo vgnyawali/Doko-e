@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import {
   activeFlashAd,
   activeHomepageSlides,
+  homepageRotation,
   homepageSliderRecords,
   normalizeHomepageSlide,
   validateFlashAd,
@@ -29,6 +30,19 @@ const ad: FlashAd = {
   created_at: '2026-09-19T00:00:00Z',
   updated_at: '',
 };
+test('original homepage cover is the fallback and optional companion across schedule changes', () => {
+  const now = Date.parse(ad.start_at);
+  const custom = { ...ad, slide_type: 'cover' as const, display_mode: 'slider' as const };
+  assert.deepEqual(homepageRotation(activeHomepageSlides([], now)), [null]);
+  assert.deepEqual(homepageRotation(activeHomepageSlides([{ ...custom, active: false }], now)), [null]);
+  const one = activeHomepageSlides([custom], now);
+  assert.deepEqual(homepageRotation(one).map((s) => s?.id ?? 'original'), ['one']);
+  const two = activeHomepageSlides([custom, { ...custom, id: 'two', priority: 0 }], now);
+  assert.deepEqual(homepageRotation(two).map((s) => s?.id ?? 'original'), ['one', 'two']);
+  assert.deepEqual(homepageRotation(two, true).map((s) => s?.id ?? 'original'), ['original', 'one', 'two']);
+  assert.deepEqual(homepageRotation(activeHomepageSlides([custom], Date.parse(ad.end_at) + 1)), [null]);
+  assert.deepEqual(homepageRotation([], true), [null]);
+});
 test('flash destinations accept internal routes and reject external or disguised destinations', () => {
   for (const url of ['/', '/products/kit', '/specials/dashain', '/#featured-products']) {
     assert.equal(safeFlashDestination(url), true);

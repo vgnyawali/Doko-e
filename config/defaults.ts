@@ -13,6 +13,7 @@ export const defaultSettings: SiteSettings = {
   support_email: '',
   announcement: 'A little closer to home — now shipping nationwide',
   special_enabled: true,
+  include_original_homepage_cover: false,
   shipping_enabled: {
     nationwide: true,
     local_only: true,

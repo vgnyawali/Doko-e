@@ -8,13 +8,13 @@ Admin → Homepage Covers & Promotions manages regular covers and Flash Ads in t
 
 Legacy records normalize to `Flash Ad + Popup`, preserving their existing behavior. New Flash Ads can be Slider, Popup, or Both; regular covers are Slider-only. A record enters both surfaces only when the administrator explicitly chooses Both. No schema migration or record duplication is required.
 
-Legacy seasonal and product promotional fields remain readable for backwards compatibility, but homepage product featuring is managed from Admin → Menus & Collections.
+Admin → Featured Products manages the existing seasonal showcase and its schedules. Product-level Featured controls and configured promotional hover content remain supported. Admin → Menus & Collections manages a separate set of collection highlights; neither system converts or overwrites the other.
 
 Images use the existing upload processor: JPG/PNG/WebP up to 10 MB input, rasterized/compressed to JPEG under 750 KB. Saved image data or external HTTPS URLs live in the server record. No new R2 bucket, image host, secrets or hard-coded campaign images are required. The server rejects unsupported data URLs, overlarge image values, executable CTA schemes and malformed timestamps. Content is rendered as text; a failed image falls back to the promotion title.
 
 ## Behavior
 
-The homepage asynchronously fetches `/api/promotions`, which returns the highest-priority eligible popup and published slider records. The shared carousel combines active regular covers and opted-in Flash Ads, advances every five seconds, supports arrows, dots and swipe gestures, and re-evaluates schedules once per second. Broken images are removed from the rotation. When no slider record is active, the carousel is hidden.
+The homepage asynchronously fetches `/api/promotions`, which returns the highest-priority eligible popup and published slider records. The shared carousel combines active regular covers and opted-in Flash Ads, advances every five seconds, supports arrows, dots and swipe gestures, and re-evaluates schedules once per second. Broken images are removed from the rotation. When no slider record is active, the original Doko cover appears automatically using its existing image and Site Settings text. Site Settings → Include original homepage cover alongside custom slides adds the original to an active custom rotation; it defaults to off and never disables the fallback.
 
 Popup dismissal (X, Escape, outside click or CTA) sets a session-only flag; configuration remains server-side. The accessible Base UI dialog traps focus and returns it on close. Promotions do not delay catalog rendering.
 

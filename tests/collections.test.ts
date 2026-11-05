@@ -83,3 +83,25 @@ void test('migration preserves products when assignments or collections are remo
   assert.equal(db.prepare('SELECT count(*) AS count FROM catalog_collection_products').get()!.count, 0);
   db.close();
 });
+
+void test('migration 0007 preserves every existing business table including customer snapshots', () => {
+  const db = new DatabaseSync(':memory:');
+  db.exec('PRAGMA foreign_keys = ON;');
+  const journal = JSON.parse(readFileSync('drizzle/meta/_journal.json', 'utf8'));
+  for (const entry of journal.entries.filter((entry: { idx: number }) => entry.idx < 7))
+    db.exec(readFileSync(`drizzle/${entry.tag}.sql`, 'utf8').replaceAll('--> statement-breakpoint', ''));
+  db.prepare('INSERT INTO products VALUES (?, ?, ?)').run('P1', 'SKU1', '{"featured":true,"inventory":7}');
+  db.prepare('INSERT INTO specials VALUES (?, ?, ?)').run('S1', 'P1', '{"active":true,"priority":2}');
+  db.prepare('INSERT INTO site_settings VALUES (?, ?)').run('main', '{"special_enabled":true,"free_shipping_threshold":75}');
+  db.prepare('INSERT INTO flash_ads VALUES (?, ?)').run('F1', '{"active":true,"image_url":"https://example.com/ad.jpg"}');
+  db.prepare('INSERT INTO checkout_orders VALUES (?, ?, ?, ?, ?)').run('O1', 'cs_test_probe', 'paid', '{"customer":{"email":"probe@example.com"},"total":1234}', '{"amount_total":1234}');
+  db.prepare('INSERT INTO product_requests (id, request_text, created_at, customer_email) VALUES (?, ?, ?, ?)').run('R1', 'Probe request', '2026-11-05', 'probe@example.com');
+  db.prepare('INSERT INTO product_request_limits VALUES (?, ?, ?)').run('probe', 1, 100);
+  const tables = ['products', 'specials', 'site_settings', 'flash_ads', 'checkout_orders', 'product_requests', 'product_request_limits'];
+  const snapshot = () => tables.map((table) => db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all());
+  const before = snapshot();
+  db.exec(readFileSync('drizzle/0007_salty_vapor.sql', 'utf8').replaceAll('--> statement-breakpoint', ''));
+  assert.deepEqual(snapshot(), before);
+  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);
+  db.close();
+});

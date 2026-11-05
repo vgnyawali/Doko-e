@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import type { SiteSettings } from '@/models/SiteSettings';
-import { Field } from './Fields';
+import { Field, Toggle } from './Fields';
 import ShippingSettings from './ShippingSettings';
 import { validateSettings } from '@/services/validation';
 export default function SiteSettingsEditor({
@@ -56,6 +56,12 @@ export default function SiteSettingsEditor({
             }
           />
         </div>
+        <Toggle label="Include original homepage cover alongside custom slides"
+          checked={!!draft.include_original_homepage_cover}
+          onChange={(value) => setDraft({ ...draft, include_original_homepage_cover: value })} />
+        <p>The original cover always appears when no custom slide is active.</p>
+        <Toggle label="Show seasonal specials" checked={draft.special_enabled}
+          onChange={(value) => setDraft({ ...draft, special_enabled: value })} />
       </section>
       <ShippingSettings settings={draft} onChange={setDraft} />
       {error && (

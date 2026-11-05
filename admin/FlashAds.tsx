@@ -110,7 +110,7 @@ export default function HomepageCovers() {
           })}
         </TableBody>
       </Table>
-      {!slides.length && <p>No homepage covers yet. The storefront carousel remains hidden until a slider cover is published.</p>}
+      {!slides.length && <p>No custom covers yet. The original homepage cover remains available automatically.</p>}
 
       {normalizedDraft && <form className="homepage-cover-editor" onSubmit={(event) => {
         event.preventDefault(); const errors = validateFlashAd(normalizedDraft);
@@ -137,7 +137,7 @@ export default function HomepageCovers() {
           <Field label="Display order (higher first)" type="number" value={normalizedDraft.priority} onChange={(value) => setDraft({ ...normalizedDraft, priority: Number(value) })} />
         </div>
         {normalizedDraft.cta_url && <Field label="Existing legacy CTA link" value={normalizedDraft.cta_url} onChange={(value) => setDraft({ ...normalizedDraft, cta_url: value })} />}
-        <p>Dates use this browser’s timezone and are stored as UTC. When no scheduled slider cover is active, the storefront carousel is hidden.</p>
+        <p>Dates use this browser’s timezone and are stored as UTC. The original homepage cover returns when no custom slide is active. Site Settings can also include it alongside custom slides.</p>
         <Toggle label="Published" checked={normalizedDraft.active} onChange={(value) => setDraft({ ...normalizedDraft, active: value })} />
         <div className="row-actions">
           <button className="primary-button" disabled={busy} type="submit">Save promotion</button>

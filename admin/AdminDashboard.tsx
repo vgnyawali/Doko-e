@@ -25,6 +25,8 @@ import {
   AlertDialogFooter,
 } from '@/components/ui/alert-dialog';
 import { emptyProduct, type Product } from '@/models/Product';
+import type { FeaturedSpecial } from '@/models/FeaturedSpecial';
+import SpecialsEditor from './SpecialsEditor';
 import type { SiteSettings } from '@/models/SiteSettings';
 import ProductEditor from './ProductEditor';
 import SheetsImport from './SheetsImport';
@@ -38,6 +40,7 @@ import type { AdminCatalogCollection } from '@/models/CatalogCollection';
 import CollectionsManager from './CollectionsManager';
 type Store = {
   products: Product[];
+  specials: FeaturedSpecial[];
   settings: SiteSettings;
   collections: AdminCatalogCollection[];
 };
@@ -174,6 +177,7 @@ export default function AdminDashboard() {
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="import">Google Sheets import</TabsTrigger>
           <TabsTrigger value="collections">Menus &amp; Collections</TabsTrigger>
+          <TabsTrigger value="specials">Featured Products</TabsTrigger>
           <TabsTrigger value="flash-ads">Homepage Covers &amp; Promotions</TabsTrigger>
           <TabsTrigger value="delivery">Delivery Areas</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
@@ -209,6 +213,7 @@ export default function AdminDashboard() {
                     'Inventory',
                     'Tax classification',
                     'Status',
+                    'Featured',
                     'Actions',
                   ].map((t) => (
                     <TableHead key={t}>{t}</TableHead>
@@ -265,6 +270,12 @@ export default function AdminDashboard() {
                       </button>
                     </TableCell>
                     <TableCell>
+                      <button disabled={busy} aria-label={`${p.featured ? 'Unfeature' : 'Feature'} ${p.name}`}
+                        onClick={() => mutate({ action: 'products', products: [{ ...p, featured: !p.featured }] })}>
+                        {p.featured ? '★ Featured' : '☆ Feature'}
+                      </button>
+                    </TableCell>
+                    <TableCell>
                       <div className="row-actions">
                         <button
                           onClick={() => {
@@ -314,6 +325,11 @@ export default function AdminDashboard() {
               setNotice('Products imported successfully.');
             }}
           />
+        </TabsContent>
+        <TabsContent value="specials">
+          <SpecialsEditor specials={store.specials} products={store.products} busy={busy}
+            onSave={(special, product) => mutate({ action: 'special', special, product })}
+            onDelete={(id) => setDeletion({ action: 'deleteSpecial', id })} />
         </TabsContent>
         <TabsContent value="collections">
           <CollectionsManager

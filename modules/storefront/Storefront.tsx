@@ -2,6 +2,8 @@
 import FlashAdPopup from '@/modules/promotions/FlashAdPopup';
 import { useEffect, useState } from 'react';
 import { seedProducts } from '@/data/products';
+import { seedSpecials } from '@/data/specials';
+import FeaturedSpecials from '@/modules/specials/FeaturedSpecials';
 import { defaultSettings } from '@/config/defaults';
 import type { Product } from '@/models/Product';
 import ProductCatalog from '@/modules/catalog/ProductCatalog';
@@ -19,6 +21,7 @@ import FeaturedCollectionRow from '@/components/FeaturedCollectionRow';
 import type { HomepageCollectionFeature } from '@/models/CatalogCollection';
 export default function Storefront() {
   const [products, setProducts] = useState(seedProducts);
+  const [specials, setSpecials] = useState(seedSpecials);
   const [settings, setSettings] = useState(defaultSettings);
   const [collections, setCollections] = useState<PublicCollectionNavigation[]>([]);
   const [homepageSlides, setHomepageSlides] = useState<FlashAd[]>([]);
@@ -33,6 +36,7 @@ export default function Storefront() {
         if (!r.ok) throw Error();
         return r.json() as Promise<{
           products: Product[];
+          specials: typeof seedSpecials;
           settings: typeof defaultSettings;
           collections: PublicCollectionNavigation[];
           collectionFeatures: HomepageCollectionFeature[];
@@ -40,6 +44,7 @@ export default function Storefront() {
       })
       .then((d) => {
         setProducts(d.products);
+        setSpecials(d.specials || []);
         setSettings(d.settings);
         setCollections(d.collections || []);
         setCollectionFeatures(d.collectionFeatures || []);
@@ -82,7 +87,9 @@ export default function Storefront() {
       <StoreAnnouncement announcement={settings.announcement} />
       <StoreNavigation collections={collections} />
       <main>
-        <HomepageCarousel slides={homepageSlides} />
+        <HomepageCarousel slides={homepageSlides} settings={settings} />
+        <FeaturedSpecials specials={specials} products={products}
+          enabled={settings.special_enabled} onView={openView} />
         <FeaturedCollectionRow
           features={collectionFeatures}
           carouselThreshold={settings.featured_items_carousel_threshold}

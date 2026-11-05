@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { type Product, shippingTypes, validateProduct } from '@/models/Product';
 import { Field, Choice, Toggle } from './Fields';
 import ImageUploadField from './ImageUploadField';
+import PromotionFields from './PromotionFields';
 import TaxFields from './TaxFields';
 import BundleEditor from './BundleEditor';
 import { normalizeProduct } from '@/services/taxService';
@@ -118,6 +119,8 @@ export default function ProductEditor({
           onChange={(v) => update('active', v)}
         />
       </div>
+      <Toggle label="Featured" checked={draft.featured} onChange={(value) => update('featured', value)} />
+      {draft.featured && <PromotionFields value={draft} onChange={(value) => setDraft({ ...draft, ...value })} />}
       {errors.length > 0 && (
         <p className="error" role="alert">
           {errors.join(' · ')}

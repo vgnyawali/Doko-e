@@ -4,6 +4,8 @@ import type { FeaturedSpecial } from '@/models/FeaturedSpecial';
 import { validateHover } from '@/models/Promotion';
 export function validateSettings(s: SiteSettings) {
   const e: string[] = [];
+  if (s.include_original_homepage_cover !== undefined && typeof s.include_original_homepage_cover !== 'boolean')
+    e.push('Original cover setting must be true or false');
   if (
     s.delivery_instructions !== undefined &&
     (typeof s.delivery_instructions !== 'string' ||

@@ -79,3 +79,52 @@ test('concurrent webhook delivery is leased and uncertain attempts stop before d
   await assert.rejects(sendOrderConfirmation(f.db, 'email-fixture', f.session, config, send, 100000 + 23*3600000), /manual review/);
   f.sql.close();
 });
+
+test('receipt uses verified customer, saved products and correct fulfillment amounts', async () => {
+  const f = fixture();
+  const data = f.data();
+  const base = data.quote.items[0];
+  data.quote.items = [
+    { ...base, name: 'Rice & tea', quantity: 2, unit_price: 12.5, line_total: 25 },
+    { ...base, product_id: 'P002', name: 'Masala', quantity: 1, unit_price: 5.99, line_total: 5.99 },
+  ];
+  data.quote.subtotal = 30.99;
+  data.quote.fulfillment_method = 'shipping';
+  const paid = { session_id:f.session, payment_status:'paid', currency:'usd', amount_subtotal:3099, amount_total:3599, amount_tax:100, amount_shipping:500, amount_discount:100,
+    customer_details:{email:'verified@example.com'},
+    shipping_details:{name:'Controlled recipient',address:{line1:'123 Test Lane',city:'Boston',state:'MA',postal_code:'02108',country:'US'}} };
+  f.sql.prepare('UPDATE checkout_orders SET data=?, payment_data=?').run(JSON.stringify(data), JSON.stringify(paid));
+  let body: any;
+  const send = (async (_url, init) => {
+    body = JSON.parse(String(init?.body));
+    return Response.json({id:'controlled-acceptance'});
+  }) as typeof fetch;
+  await sendOrderConfirmation(f.db,'email-fixture',f.session,config,send);
+    assert.deepEqual(body.to,['verified@example.com']);
+    assert.equal(body.from,'Doko <order@doko-e.com>');
+    assert.equal(body.reply_to,'order@doko-e.com');
+    for(const text of ['Order: DOKO-EMAIL-FIXTUR','Rice & tea — 2 × $12.50 = $25.00','Masala — 1 × $5.99 = $5.99','Subtotal: $30.99','Shipping: $5.00','Discount: −$1.00','Total paid: $35.99','123 Test Lane','Boston, MA, 02108'])
+      assert.ok(body.text.includes(text),text);
+    assert.ok(body.subject.includes('Doko order confirmed'));
+    assert.ok(body.html.includes('Rice &amp; tea'));
+  f.sql.close();
+});
+
+test('failed, expired and canceled orders never contact the email provider', async () => {
+  for(const status of ['failed','expired','canceled','pending']) {
+    const f=fixture('cs_live_fixture',status);
+    let calls=0;
+    await assert.rejects(sendOrderConfirmation(f.db,'email-fixture',f.session,config,(async()=>{calls++;return Response.json({id:'unexpected'});}) as typeof fetch));
+    assert.equal(calls,0);
+    f.sql.close();
+  }
+});
+
+test('unconfirmed provider acceptance is generic and leaves the successful payment intact', async () => {
+  const f=fixture();
+  await assert.rejects(sendOrderConfirmation(f.db,'email-fixture',f.session,config,(async()=>Response.json({private_customer_data:'do-not-expose'})) as typeof fetch),/^Error: Order email not confirmed$/);
+  assert.equal(f.sql.prepare('SELECT status FROM checkout_orders').get()!.status,'paid');
+  assert.equal(f.data().confirmation_email_sent_at,undefined);
+  assert.equal(f.data().confirmation_email_lease_until,0);
+  f.sql.close();
+});

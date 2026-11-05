@@ -211,3 +211,8 @@ export function homepageSlideDestination(slide: FlashAd) {
   const destination = slide.click_url?.trim() || slide.cta_url.trim();
   return destination && safePromoLink(destination) ? destination : '';
 }
+
+// null represents the original cover; it is never stored as a promotional record.
+export function homepageRotation(active: HomepageSlide[], includeOriginal = false): (HomepageSlide | null)[] {
+  return !active.length ? [null] : includeOriginal ? [null, ...active] : active;
+}

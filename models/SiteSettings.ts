@@ -11,5 +11,6 @@ export interface SiteSettings {
   support_email: string;
   announcement: string;
   special_enabled: boolean;
+  include_original_homepage_cover?: boolean;
   shipping_enabled: Record<ShippingType, boolean>;
 }
