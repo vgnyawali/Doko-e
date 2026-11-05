@@ -1,5 +1,7 @@
 # Order confirmation email (Resend)
 
+See [the production activation checklist and PASS/FAIL report](./ACTIVATION.md) before enabling production sending. The existing source supports activation independently of Collections, but its email-specific failure logging and actual sender/delivery verification remain unresolved gates.
+
 Sending is disabled until the following **hosted Site environment values** are configured and deployed:
 
 - `RESEND_API_KEY`: Resend sending API key (Secret ON).
