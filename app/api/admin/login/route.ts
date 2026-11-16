@@ -32,9 +32,8 @@ export async function POST(request: Request) {
         { error: 'Incorrect username or password.' },
         { status: 401, headers: { 'Cache-Control': 'no-store' } },
       );
-    return new Response(JSON.stringify({ ok: true }), {
+    return Response.json({ ok: true }, {
       headers: {
-        'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
         'Set-Cookie': sessionCookieHeader(session),
       },

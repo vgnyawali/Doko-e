@@ -15,7 +15,17 @@ export default function AdminLogin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = (await response.json()) as { error?: string };
+      const text = await response.text();
+      let data: { error?: string } = {};
+      if (text) {
+        try {
+          data = JSON.parse(text) as { error?: string };
+        } catch {
+          throw Error('The login server returned an invalid response. Restart the local server and try again.');
+        }
+      }
+      if (!text)
+        throw Error('The login server returned an empty response. Restart the local server and try again.');
       if (!response.ok) throw Error(data.error || 'Unable to sign in.');
       window.location.assign('/admin');
     } catch (e) {
