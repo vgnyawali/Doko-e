@@ -1447,6 +1447,27 @@ footer {
 .site-header { padding-top: 4px; padding-bottom: 4px; }
 .footer-main .brand-logo img { width: 100px; height: 108px; }
 .admin-gate .brand-logo img { width: 112px; height: 120px; }
+
+.partner-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 36px 0 72px; color: var(--ink); }
+.partner-header { display: flex; justify-content: space-between; gap: 32px; align-items: flex-start; margin-bottom: 28px; }
+.partner-header h1 { color: var(--red); font-family: Georgia, serif; font-size: clamp(32px, 5vw, 52px); margin: 4px 0 8px; }
+.partner-card { background: #fff; border: 1px solid var(--border); border-radius: 18px; padding: 24px; margin: 20px 0; box-shadow: 0 12px 35px rgba(68,35,25,.06); }
+.partner-card h2, .partner-management h3 { color: var(--red); margin: 0 0 16px; }
+.partner-submissions { display: grid; gap: 10px; }
+.partner-submissions article, .partner-admin-row { border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 14px; align-items: center; }
+.partner-submissions small, .partner-admin-row small { display: block; color: #677086; margin-top: 4px; }
+.submission-status { text-transform: capitalize; font-size: 12px; font-weight: 700; color: var(--red); background: #fff4e1; border-radius: 99px; padding: 6px 10px; }
+.partner-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.partner-form label, .partner-review label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+.partner-form input,.partner-form textarea,.partner-review input,.partner-review textarea,.partner-review select,.partner-admin-row input,.partner-admin-row select,.partner-management .admin-toolbar select { border: 1px solid var(--border); border-radius: 6px; padding: 10px; font: inherit; }
+.partner-form textarea { min-height: 90px; }
+.partner-admin-row { grid-template-columns: minmax(180px,1fr) auto minmax(360px,2fr) minmax(180px,1fr); margin: 10px 0; }
+.partner-review { margin-top: 22px; padding: 20px; border: 2px solid var(--gold); border-radius: 14px; }
+.partner-review dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.partner-review dl div { background: #faf7f2; padding: 10px; }
+.partner-review dt { font-size: 11px; text-transform: uppercase; color: #677086; }.partner-review dd { margin: 4px 0 0; }
+.partner-review > img { width: 180px; max-height: 180px; object-fit: contain; }.partner-approval { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 20px; }.partner-approval h4,.partner-approval fieldset { grid-column: 1/-1; }
+@media(max-width:760px){.partner-header{display:block}.partner-form,.partner-review dl,.partner-approval{grid-template-columns:1fr}.partner-submissions article,.partner-admin-row{grid-template-columns:1fr}.partner-approval h4,.partner-approval fieldset{grid-column:auto}}
 @media (max-width: 700px) { .brand-logo img { width: 65px; height: 70px; } .site-header .brand-logo img { width: 36px; height: 39px; } .brand-logo-with-name span { font-size: 21px; } .footer-main .brand-logo img { width: 84px; height: 90px; } }
 @media (max-width: 420px) { .header-search { display: none; } .header-free-shipping { font-size: 11px; } }
 .promotion-card-link { display: block; cursor: pointer; color: inherit; text-decoration: none; }

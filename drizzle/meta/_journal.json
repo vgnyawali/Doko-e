@@ -57,6 +57,13 @@
       "when": 1793772341976,
       "tag": "0007_salty_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794806681840,
+      "tag": "0008_lethal_madelyne_pryor",
+      "breakpoints": true
     }
   ]
 }

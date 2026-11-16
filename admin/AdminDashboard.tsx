@@ -38,6 +38,7 @@ import ShippingSettings from './ShippingSettings';
 import { taxClasses } from '@/config/tax';
 import type { AdminCatalogCollection } from '@/models/CatalogCollection';
 import CollectionsManager from './CollectionsManager';
+import PartnerManagement from './PartnerManagement';
 type Store = {
   products: Product[];
   specials: FeaturedSpecial[];
@@ -182,6 +183,7 @@ export default function AdminDashboard() {
           <TabsTrigger value="delivery">Delivery Areas</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="requests">Product Requests{newRequests !== null ? ` (${newRequests})` : ''}</TabsTrigger>
+          <TabsTrigger value="partners">Partner Management</TabsTrigger>
           <TabsTrigger value="settings">Site Settings</TabsTrigger>
         </TabsList>
         <TabsContent value="products">
@@ -349,6 +351,7 @@ export default function AdminDashboard() {
           <OrdersView />
         </TabsContent>
         <TabsContent value="requests"><ProductRequests onCount={setNewRequests} /></TabsContent>
+        <TabsContent value="partners"><PartnerManagement /></TabsContent>
         <TabsContent value="flash-ads"><HomepageCovers /></TabsContent>
         <TabsContent value="delivery"><ShippingSettings settings={deliveryDraft || store.settings} onChange={setDeliveryDraft} /><button className="primary-button" disabled={busy || !deliveryDraft} onClick={() => void mutate({action:'settings',settings:deliveryDraft}).then(() => setDeliveryDraft(null))}>Save delivery settings</button></TabsContent>
       </Tabs>

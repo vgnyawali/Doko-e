@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { seedProducts } from '@/data/products';
 import { seedSpecials } from '@/data/specials';
 import { validateProduct } from '@/models/Product';
@@ -9,6 +11,7 @@ import { parseCSV, previewCSV, sheetCSVUrl } from '@/services/sheets';
 import { canPurchase } from '@/services/shipping';
 import { defaultSettings } from '@/config/defaults';
 import { validateSettings, validateSpecial } from '@/services/validation';
+import { canMutatePartnerSubmission, emptyPartnerDraft, normalizePartnerDraft, validatePartnerDraft } from '@/models/Partner';
 test('product validation rejects invalid quantities, prices and URLs', () => {
   assert.deepEqual(validateProduct(seedProducts[0]), []);
   assert.ok(
@@ -116,4 +119,34 @@ test('settings and specials reject invalid configuration', () => {
       seedProducts,
     ).length >= 2,
   );
+});
+test('partner drafts normalize untrusted text and require core product facts', () => {
+  const draft = normalizePartnerDraft({ ...emptyPartnerDraft, name: '  Tea  ', category: 'Beverages', brand: 'Doko', package_size: '20 bags' });
+  assert.equal(draft.name, 'Tea');
+  assert.deepEqual(validatePartnerDraft(draft), []);
+  assert.ok(validatePartnerDraft({ ...draft, image_url: 'javascript:alert(1)' }).length > 0);
+});
+test('partner mutation authorization requires matching tenant and editable state', () => {
+  assert.equal(canMutatePartnerSubmission('partner-a', { partner_id: 'partner-a', status: 'draft' }), true);
+  assert.equal(canMutatePartnerSubmission('partner-a', { partner_id: 'partner-b', status: 'draft' }), false);
+  assert.equal(canMutatePartnerSubmission('partner-a', { partner_id: 'partner-a', status: 'submitted' }), false);
+});
+test('partner migration is additive and tenant-scoped database reads stay isolated', () => {
+  const sql = readFileSync('drizzle/0008_lethal_madelyne_pryor.sql', 'utf8')
+    .replaceAll('--> statement-breakpoint', '');
+  assert.doesNotMatch(sql, /^\s*(?:DROP|DELETE|ALTER)\b/im);
+  const db = new DatabaseSync(':memory:');
+  db.exec('PRAGMA foreign_keys=ON; CREATE TABLE products(id TEXT PRIMARY KEY); CREATE TABLE catalog_collections(id TEXT PRIMARY KEY);');
+  db.exec(sql);
+  const now = new Date(0).toISOString();
+  const addPartner = db.prepare(`INSERT INTO partners(id,name,slug,status,profile_data,created_at,updated_at) VALUES(?,?,?,'active','{}',?,?)`);
+  addPartner.run('a', 'Partner A', 'partner-a', now, now);
+  addPartner.run('b', 'Partner B', 'partner-b', now, now);
+  const addSubmission = db.prepare(`INSERT INTO partner_product_submissions(id,partner_id,status,draft_data,created_by,created_at,updated_at) VALUES(?,?,'draft','{}','user',?,?)`);
+  addSubmission.run('submission-a', 'a', now, now);
+  addSubmission.run('submission-b', 'b', now, now);
+  const rows = db.prepare('SELECT id FROM partner_product_submissions WHERE partner_id=?').all('a');
+  assert.deepEqual(rows.map(row => row.id), ['submission-a']);
+  assert.throws(() => addSubmission.run('bad', 'missing', now, now));
+  db.close();
 });
