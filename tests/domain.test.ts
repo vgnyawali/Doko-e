@@ -12,6 +12,8 @@ import { canPurchase } from '@/services/shipping';
 import { defaultSettings } from '@/config/defaults';
 import { validateSettings, validateSpecial } from '@/services/validation';
 import { canMutatePartnerSubmission, emptyPartnerDraft, normalizePartnerDraft, validatePartnerDraft } from '@/models/Partner';
+import './partner-mvp.test';
+import './partner-invitation.test';
 test('product validation rejects invalid quantities, prices and URLs', () => {
   assert.deepEqual(validateProduct(seedProducts[0]), []);
   assert.ok(
@@ -121,7 +123,7 @@ test('settings and specials reject invalid configuration', () => {
   );
 });
 test('partner drafts normalize untrusted text and require core product facts', () => {
-  const draft = normalizePartnerDraft({ ...emptyPartnerDraft, name: '  Tea  ', category: 'Beverages', brand: 'Doko', package_size: '20 bags' });
+  const draft = normalizePartnerDraft({ ...emptyPartnerDraft, name: '  Tea  ', category: 'Beverages', brand: 'Doko', package_size: '20 bags', partner_sku: 'TEA-1', country_of_origin: 'Nepal' });
   assert.equal(draft.name, 'Tea');
   assert.deepEqual(validatePartnerDraft(draft), []);
   assert.ok(validatePartnerDraft({ ...draft, image_url: 'javascript:alert(1)' }).length > 0);

@@ -6,6 +6,9 @@ declare namespace Cloudflare {
     STRIPE_SHIPPING_RATE_ID?: string;
     RESEND_API_KEY?: string;
     ORDER_EMAIL_FROM?: string;
+    PARTNER_EMAIL_FROM?: string;
+    PARTNER_INVITE_EMAIL_ENABLED?: string;
+    PARTNER_SESSION_SECRET?: string;
     ORDER_EMAIL_ENABLED?: string;
     ADMIN_USER_IDS?: string;
     ADMIN_EMAILS?: string;

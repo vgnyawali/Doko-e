@@ -38,7 +38,7 @@ import ShippingSettings from './ShippingSettings';
 import { taxClasses } from '@/config/tax';
 import type { AdminCatalogCollection } from '@/models/CatalogCollection';
 import CollectionsManager from './CollectionsManager';
-import PartnerManagement from './PartnerManagement';
+import PartnerManagement from './PartnerManagementMvp';
 type Store = {
   products: Product[];
   specials: FeaturedSpecial[];

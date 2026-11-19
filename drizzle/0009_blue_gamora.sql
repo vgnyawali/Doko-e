@@ -1,0 +1,1 @@
+ALTER TABLE `partner_product_submissions` ADD `approval_data` text DEFAULT '{}' NOT NULL;

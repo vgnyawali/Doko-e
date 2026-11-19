@@ -64,6 +64,20 @@
       "when": 1794806681840,
       "tag": "0008_lethal_madelyne_pryor",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794847074563,
+      "tag": "0009_blue_gamora",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1794882056620,
+      "tag": "0010_shiny_blonde_phantom",
+      "breakpoints": true
     }
   ]
 }

@@ -1462,12 +1462,23 @@ footer {
 .partner-form input,.partner-form textarea,.partner-review input,.partner-review textarea,.partner-review select,.partner-admin-row input,.partner-admin-row select,.partner-management .admin-toolbar select { border: 1px solid var(--border); border-radius: 6px; padding: 10px; font: inherit; }
 .partner-form textarea { min-height: 90px; }
 .partner-admin-row { grid-template-columns: minmax(180px,1fr) auto minmax(360px,2fr) minmax(180px,1fr); margin: 10px 0; }
+.partner-admin-list { display: grid; gap: 12px; }
+.partner-admin-row { grid-template-columns: minmax(220px,1fr) auto auto minmax(220px,1fr); }
+.partner-invite { display: flex; flex-wrap: wrap; gap: 8px; }
+.partner-invite input, .partner-invite select { min-width: 150px; }
+.partner-edit-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; padding: 18px; margin: 16px 0 24px; border: 2px solid var(--gold); border-radius: 14px; background: #fffaf1; }
+.partner-edit-form h3, .partner-edit-form .full-width { grid-column: 1/-1; }
+.partner-edit-form label, .partner-approval label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+.partner-edit-form input, .partner-edit-form textarea, .partner-edit-form select { border: 1px solid var(--border); border-radius: 6px; padding: 10px; font: inherit; }
+.partner-edit-form textarea { min-height: 100px; }
+.partner-edit-form fieldset { display: flex; flex-wrap: wrap; gap: 14px; border: 1px solid var(--border); padding: 12px; }
+.partner-edit-form fieldset label { display: flex; align-items: center; gap: 6px; }
 .partner-review { margin-top: 22px; padding: 20px; border: 2px solid var(--gold); border-radius: 14px; }
 .partner-review dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .partner-review dl div { background: #faf7f2; padding: 10px; }
 .partner-review dt { font-size: 11px; text-transform: uppercase; color: #677086; }.partner-review dd { margin: 4px 0 0; }
 .partner-review > img { width: 180px; max-height: 180px; object-fit: contain; }.partner-approval { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 20px; }.partner-approval h4,.partner-approval fieldset { grid-column: 1/-1; }
-@media(max-width:760px){.partner-header{display:block}.partner-form,.partner-review dl,.partner-approval{grid-template-columns:1fr}.partner-submissions article,.partner-admin-row{grid-template-columns:1fr}.partner-approval h4,.partner-approval fieldset{grid-column:auto}}
+@media(max-width:760px){.partner-header{display:block}.partner-form,.partner-review dl,.partner-approval,.partner-edit-form{grid-template-columns:1fr}.partner-submissions article,.partner-admin-row{grid-template-columns:1fr}.partner-approval h4,.partner-approval fieldset,.partner-edit-form h3,.partner-edit-form .full-width{grid-column:auto}}
 @media (max-width: 700px) { .brand-logo img { width: 65px; height: 70px; } .site-header .brand-logo img { width: 36px; height: 39px; } .brand-logo-with-name span { font-size: 21px; } .footer-main .brand-logo img { width: 84px; height: 90px; } }
 @media (max-width: 420px) { .header-search { display: none; } .header-free-shipping { font-size: 11px; } }
 .promotion-card-link { display: block; cursor: pointer; color: inherit; text-decoration: none; }
@@ -1477,3 +1488,5 @@ footer {
 .product-image-viewer[data-slot="dialog-content"] { width:min(1100px,calc(100vw - 24px)); max-width:calc(100vw - 24px); max-height:92dvh; overflow:auto; padding:24px; background:white; }
 .product-image-viewer img { display:block; width:100%; height:auto; max-height:78dvh; object-fit:contain; }
 .product-image-viewer [data-slot="dialog-title"] { padding-right:35px; }
+.admin-section-link{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;padding:0;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em;cursor:pointer}.admin-section-link:hover,.admin-section-link:focus-visible{color:var(--maroon,#801f32)}.partner-submission-toolbar{scroll-margin-top:1rem}.partner-submission-toolbar small{display:block;margin-top:.25rem;color:#6b5b5b}
+.partner-auth-shell{min-height:100vh;display:grid;place-items:center;padding:2rem;background:#f8f3ea}.partner-auth-card{width:min(100%,30rem);display:grid;gap:1rem;background:#fff;border:1px solid #eadfcf;border-top:5px solid #801f32;border-radius:12px;padding:clamp(1.5rem,4vw,2.5rem);box-shadow:0 18px 50px #4c1c1220}.partner-auth-card label{display:grid;gap:.4rem;font-weight:700}.partner-auth-card input{width:100%;padding:.8rem;border:1px solid #c9b9a6;border-radius:6px;font:inherit}
